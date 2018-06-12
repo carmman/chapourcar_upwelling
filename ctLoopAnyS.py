@@ -954,7 +954,11 @@ if NIJ > 0 : # A.F.C
         lignames = Tm_[0:Nmodels-1];
     #
     if NIJ == 3 : # On transforme les %tages en Nombre (i.e. en effectif)
-        Tp_ = Tp_ * Nobsc / 100;
+        if 0 : # icicicicici
+            Tp_ = Tp_ * Nobsc / 100;
+        else : 
+            Tp_ = np.round(Tp_ * Nobsc / 100).astype(int); ##$$
+        #Tp_ = Nobsc - Tp_; # j'essaye ca ...
     # _________________________
     # Faire l'AFC proprment dit
     if AFCWITHOBS :
