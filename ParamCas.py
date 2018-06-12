@@ -48,7 +48,9 @@ SAVEFIG   = False; # True; False;
 fprefixe  = 'Z_'
 #
 # Prendre une zone plus petite (concerne aussi l'entrainement)
-SIZE_REDUCTION = 'All';
+#SIZE_REDUCTION = 'All';
+SIZE_REDUCTION = 'sel'; # selectionne une zone reduite  
+#SIZE_REDUCTION = 'RED'; # Ne pas utiliser
     # 'All' : Pas de réduction d'aucune sorte
     # 'sel' : On sélectionne, d'entrée de jeu une zone plus petite,
     #         c'est à dire à la lecture des données. Zone sur laquelle
@@ -130,7 +132,7 @@ if CENTRED :
 # for CAH for classif with CT (see ctObsMdl for more)
 method_cah = 'ward';      # 'average', 'ward', 'complete','weighted'
 dist_cah   = 'euclidean'; #
-nb_class   = 7; #6, 7, 8  # Nombre de classes retenu
+nb_class   = 6; #6, 7, 8  # Nombre de classes retenu
 ccmap      = cm.jet;      # Accent, Set1, Set1_r, gist_ncar; jet, ... : map de couleur pour les classes
 # pour avoir des couleurs à peu près equivalente pour les plots
 #pcmap     = ccmap(np.arange(1,256,round(256/nb_class)));ko 512ko, 384ko

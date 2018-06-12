@@ -525,7 +525,7 @@ def showbarcell (sm,norm='brute',a=0,b=1,scale=0,cmap=cm.rainbow,sztext=11) :
     return
 
 
-def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
+def showprofils(sm, figure=None, visu=1, Data=None, bmus=None, scale=None, \
                 Clevel=None, Gscale=0.25, showcellid=None, ColorClass=None) :
     ''' showprofils (sm, visu, Data, bmus ,scale, Clevel, Gscale)
     | Pour chaque neurone, on représente, dans un subplot, le référent et/ou des
@@ -623,14 +623,13 @@ def showprofils(sm, visu=1, Data=None, bmus=None, scale=None, \
             ColorClass = ColorClass / 255;
     ###<<<
 
-
-        
-
     if visu<1 or visu>3 :
        print("showprofils : bad visu value -> turn to 1 (referents only)");
        visu=1;
-   
-    fig = plt.figure();
+       
+    if figure is None :
+        fig = plt.figure();
+        
     if visu==2 or visu==3 : # Les données
         inode =  0;
         for l in np.arange(nbl) :     # en supposant les référents

@@ -179,7 +179,7 @@ def datacodification4CT(data) :
         Ddata  = tls.centred(Ddata,biais=0); # mais en fait ...
     #----
     return data, Ddata, NDdata;
-#----------------------------------------------------------------------
+#%%----------------------------------------------------------------------
 # Des trucs qui pourront servir
 tpgm0 = time();
 plt.ion()
@@ -261,15 +261,21 @@ if Nda > 0 : # Ne prendre que les Nda dernières années (rem ATTENTION, toutes le
         plt.show(); sys.exit(0)
 #
 # Paramétrage (#2) : _________________________________
+print("-- SIZE_REDUCTION == '{}'".format(SIZE_REDUCTION))
 if SIZE_REDUCTION == 'sel' or SIZE_REDUCTION == 'RED':
     # Définir une zone plus petite
     #>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    frl = int(np.where(lat==20.5)[0]);
-    tol = int(np.where(lat==11.5)[0]); # pour avoir 12.5, faut mettre 11.5
+    #    Lon > -28 et Lon < -16 et
+    #    Lat > 10 et Lat < 23
+    #>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    frl = int(np.where(lat==22.5)[0]);
+    tol = int(np.where(lat==9.5)[0]); # pour avoir 10.5, faut mettre 9.5
     lat = lat[frl:tol];
-    frc = int(np.where(lon==-20.5)[0]);
-    toc = int(np.where(lon==-11.5)[0]); # pour avoir 12.5, faut mettre 11.5
+    frc = int(np.where(lon==-27.5)[0]);
+    toc = int(np.where(lon==-15.5)[0]); # pour avoir 16.5, faut mettre 15.5
     lon = lon[frc:toc];
+    print("   New LAT limits [{}, {}]".format(np.min(lat),np.max(lat)))
+    print("   New LON limits [{}, {}]".format(np.min(lon),np.max(lon)))
 if SIZE_REDUCTION == 'sel' :
     # Prendre d'entrée de jeu une zone plus petite
     sst_obs = sst_obs[:,frl:tol,frc:toc];
@@ -347,7 +353,7 @@ if 0 : #==>> La carte
     ctk.showmap(sMapO,sztext=11,colbar=1,cmap=cm.rainbow,interp=None);
     plt.suptitle("Obs, Les Composantes de la carte", fontsize=16);
 #
-# Other stuffs ______________________________________
+#%% Other stuffs ______________________________________
 bmusO  = ctk.mbmus (sMapO, Data=Dobs); # déjà vu ? conditionnellement ?
 minref = np.min(sMapO.codebook);
 maxref = np.max(sMapO.codebook);
@@ -367,13 +373,13 @@ if TRANSCOCLASSE is not '' :
 classe_Dobs = class_ref[bmusO].reshape(NDobs); #(sMapO.dlen)
 XC_Ogeo     = dto2d(classe_Dobs,Lobs,Cobs,isnumobs); # Classification géographique
 
-#%%%>
+#>
 # Nombre de pixels par classe (pour les obs)
 Nobsc = np.zeros(nb_class)
 for c in np.arange(nb_class)+1 :
     iobsc = np.where(classe_Dobs==c)[0]; # Indices des classes c des obs
     Nobsc[c-1] = len(iobsc);
-#%%%<
+#%%<
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # Pour différencier la zone entiere de la zone REDuite, je conviens que le o
@@ -395,19 +401,27 @@ fond_C = dto2d(fond_C,Lobs,Cobs,isnumobs,missval=0.5)
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 #
 if 1 : # for Obs
-    plt.figure(figsize=(12,6) );
+    plt.figure(figsize=(6,6) );
     plt.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
     hcb    = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
     hcb.set_ticklabels(coches);
     hcb.ax.tick_params(labelsize=8)
     plt.title("obs, classe géographique Method %s"%(method_cah),fontsize=16); #,fontweigth='bold');
-    plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=10)
-    plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=10)
+    if SIZE_REDUCTION == 'All' :
+        lolast = 4
+    else :
+        lolast = 2
+    if 0 :
+        plt.xticks(np.arange(0,Cobs,lolast), lon[np.arange(0,Cobs,lolast)], rotation=45, fontsize=10)
+        plt.yticks(np.arange(0,Lobs,lolast), lat[np.arange(0,Lobs,lolast)], fontsize=10)
+    else :
+        plt.xticks(np.arange(-0.5,Cobs,lolast), np.round(lon[np.arange(0,Cobs,lolast)]).astype(int), rotation=45, fontsize=10)
+        plt.yticks(np.arange(0.5,Lobs,lolast), np.round(lat[np.arange(0,Lobs,lolast)]).astype(int), fontsize=10)
     #grid(); # for easier check
     #plt.show(); sys.exit(0)
 #
 if 0 : # for obs
-    plt.figure(figsize=(16,8) );
+    plt.figure(figsize=(12,6) );
     TmoymensclassObs = moymensclass(sst_obs,isnumobs,classe_Dobs,nb_class)
     #plt.plot(TmoymensclassObs); plt.axis('tight');
     for i in np.arange(nb_class) :
@@ -416,12 +430,13 @@ if 0 : # for obs
     plt.xlabel('mois');
     plt.legend(np.arange(nb_class)+1,loc=2,fontsize=8);
     plt.title("obs, Moy. Mens. par Classe Method %s"%(method_cah),fontsize=16);
-    plt.show(); sys.exit(0)
+    #plt.show(); sys.exit(0)
 #
 if 0 :
-    plt.figure(figsize=(12,12) );
-    ctk.showprofils(sMapO, Data=Dobs,visu=3, scale=2,Clevel=class_ref-1,Gscale=0.5,
+    fig = plt.figure(figsize=(6,10) );
+    ctk.showprofils(sMapO, figure=fig, Data=Dobs,visu=3, scale=2,Clevel=class_ref-1,Gscale=0.5,
                 ColorClass=pcmap);
+    #plt.show(); sys.exit(0)
 #
 #######################################################################
 #
@@ -1055,7 +1070,7 @@ if NIJ > 0 : # A.F.C
             N2take = 10;
             print("\nd2u :");
             for i in np.arange(N2take) :
-                print('\''+Tmdlname[iord[i]],end='\','); #?
+                print("\'"+Tmdlname[iord[i]],end="\',"); #?
             print();
     #
     # Nuage de l'AFC

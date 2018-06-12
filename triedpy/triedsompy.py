@@ -208,7 +208,7 @@ class SOM(object):
     
     #Main loop of training
     #def train(self, trainlen=None, verbose='on'):
-    def train(self, etape1=[5,5,2],etape2=[5,2,0.1], verbose='on'):
+    def train(self, etape1=[5,5,2],etape2=[5,2,0.1], verbose='on', retqerrflg=False):
         ''' etape1    etape2
         1.   [X]        [X]     : DEUX etapes dont on choisi les parametres
         2.   [X]         0      : UNE seule etape (la 1ere) dont on choisit les parametres
@@ -275,6 +275,8 @@ class SOM(object):
                 print()
                 print("Total time elapsed: %f seconds" %ts)
                 print("final quantization error: %f" %err) 
+            if retqerrflg :
+                return (err)
     
     #to project a data set to a trained SOM and find the index of bmu 
     #It is based on nearest neighborhood search module of scikitlearn, but it is not that fast.
