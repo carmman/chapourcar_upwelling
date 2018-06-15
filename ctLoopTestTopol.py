@@ -318,6 +318,10 @@ if 0 : # Visu (et sauvegarde éventuelle de la figure) des données telles
     #X_ = np.mean(Dobs, axis=1); X_ = X_.reshape(743,1); #rem = 0.0 when anomalies
     plt.show(); sys.exit(0)
 #%%
+n_tests = 50
+vseed = np.empty((n_tests,))
+vqerr = np.empty((n_tests,))
+vterr = np.empty((n_tests,))
 #######################################################################
 #
 #
@@ -329,40 +333,56 @@ nbl      = 30;  nbc =  4;  # Taille de la carte
 #nbl      = 36;  nbc =  6;  # Taille de la carte
 #nbl      = 52;  nbc =  8;  # Taille de la carte
 #Parm_app = ( 5, 5., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
-Parm_app = ( 500, 5., 1.,  1000, 1., 0.1); # Température ini, fin, nb_it
+Parm_app = ( 50, 5., 1.,  100, 1., 0.1); # Température ini, fin, nb_it
 epoch1,radini1,radfin1,epoch2,radini2,radfin2 = Parm_app
-#----------------------------------------------------------------------
-tseed = 0; #tseed = 9; #tseed = np.long(time());
-print("tseed=",tseed); np.random.seed(tseed);
-#----------------------------------------------------------------------
-# Création de la structure de la carte_______________
-norm_method = 'data'; # je n'utilise pas 'var' mais je fais centred à
-                      # la place (ou pas) qui est équivalent, mais qui
-                      # me permet de garder la maitrise du codage
-sMapO = SOM.SOM('sMapObs', Dobs, mapsize=[nbl, nbc], norm_method=norm_method, \
-              initmethod='random', varname=varnames)
-#print("NDobs(sm.dlen)=%d, dim(Dapp)=%d\nCT : %dx%d=%dunits" \
-#      %(sMapO.dlen,sMapO.dim,nbl,nbc,sMapO.nnodes));
-#
-# Apprentissage de la carte _________________________
-etape1=[epoch1,radini1,radfin1];    etape2=[epoch2,radini2,radfin2];
-qerr = sMapO.train(etape1=etape1,etape2=etape2, verbose='off',retqerrflg=True);
-# + err topo maison
-bmus2O = ctk.mbmus (sMapO, Data=None, narg=2);
-etO    = ctk.errtopo(sMapO, bmus2O); # dans le cas 'rect' uniquement
-print("Obs, cas: {}".format(qerr))
-print("Obs, quantization error = {:.4f}".format(qerr))
-print("Obs, topological error  = {:.4f}".format(etO))
-#
-# Visualisation______________________________________
-if 0 : #==>> la U_matrix
-    a=sMapO.view_U_matrix(distance2=2, row_normalized='No', show_data='Yes', \
-                      contooor='Yes', blob='No', save='No', save_dir='');
-    plt.suptitle("Obs, The U-MATRIX", fontsize=16);
-if 0 : #==>> La carte
-    ctk.showmap(sMapO,sztext=11,colbar=1,cmap=cm.rainbow,interp=None);
-    plt.suptitle("Obs, Les Composantes de la carte", fontsize=16);
-#
+case_label = "Map-{}x{}_Ep1-{}_Ep2-{}".format(nbl, nbc, epoch1, epoch2)
+print("----------------------------------------------------------------------")
+print("- Archi et cas: {}".format(case_label))
+print("-   carte:    nbl={},  nbc={}".format(nbl,nbc))
+print("-   Parm_app: {:d}-{:.1f}-{:.1f}  {:d}-{:.1f}-{:.1f}".format(epoch1,radini1,radfin1,epoch2,radini2,radfin2))
+print("----------------------------------------------------------------------")
+for iloop in np.arange(n_tests):
+    #----------------------------------------------------------------------
+    if iloop < n_tests / 2 :
+        tseed = iloop
+    else:
+        tseed = np.long(time());
+        np.random.seed(tseed);
+    #tseed = 0; #tseed = 9; 
+    #print("tseed=",tseed);
+    #----------------------------------------------------------------------
+    # Création de la structure de la carte_______________
+    norm_method = 'data'; # je n'utilise pas 'var' mais je fais centred à
+                          # la place (ou pas) qui est équivalent, mais qui
+                          # me permet de garder la maitrise du codage
+    sMapO = SOM.SOM('sMapObs', Dobs, mapsize=[nbl, nbc], norm_method=norm_method, \
+                  initmethod='random', varname=varnames)
+    #print("NDobs(sm.dlen)=%d, dim(Dapp)=%d\nCT : %dx%d=%dunits" \
+    #      %(sMapO.dlen,sMapO.dim,nbl,nbc,sMapO.nnodes));
+    #
+    # Apprentissage de la carte _________________________
+    etape1=[epoch1,radini1,radfin1];    etape2=[epoch2,radini2,radfin2];
+    qerr = sMapO.train(etape1=etape1,etape2=etape2, verbose='off',retqerrflg=True);
+    # + err topo maison
+    bmus2O = ctk.mbmus (sMapO, Data=None, narg=2);
+    etO    = ctk.errtopo(sMapO, bmus2O); # dans le cas 'rect' uniquement
+    if np.sum(np.isnan(sMapO.codebook)) == 0 :
+        print("Obs, cas: {} .. {:3d} ... tseed: {} ... qerr: {:8.6f} ... terr: {:.4f}".format(
+                '',iloop,tseed,qerr,etO))
+    #
+    # Visualisation______________________________________
+    if 0 : #==>> la U_matrix
+        a=sMapO.view_U_matrix(distance2=2, row_normalized='No', show_data='Yes', \
+                          contooor='Yes', blob='No', save='No', save_dir='');
+        plt.suptitle("Obs, The U-MATRIX", fontsize=16);
+    if 0 : #==>> La carte
+        ctk.showmap(sMapO,sztext=11,colbar=1,cmap=cm.rainbow,interp=None);
+        plt.suptitle("Obs, Les Composantes de la carte", fontsize=16);
+    #
+    vseed[iloop] = tseed
+    vqerr[iloop] = qerr
+    vterr[iloop] = etO
+print("----------------------------------------------------------------------\n")
 #%% Other stuffs ______________________________________
 bmusO  = ctk.mbmus (sMapO, Data=Dobs); # déjà vu ? conditionnellement ?
 minref = np.min(sMapO.codebook);

@@ -29,6 +29,8 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from   matplotlib import cm
+from   mpl_toolkits.axes_grid1 import Grid
+from   matplotlib import __version__ as plt_version
 from   triedpy import triedtools as tls
 
 
@@ -524,9 +526,13 @@ def showbarcell (sm,norm='brute',a=0,b=1,scale=0,cmap=cm.rainbow,sztext=11) :
     fig.patch.set_facecolor('white');
     return
 
+#    ctk.showprofils(sMapO, figure=fig, Data=Dobs,visu=3, scale=2,Clevel=class_ref-1,Gscale=0.5,
+#                ColorClass=pcmap);
+#sm=sMapO; figure=None; Data=Dobs;visu=3; bmus=None; scale=2;Clevel=class_ref-1;Gscale=0.5; showcellid=None;ColorClass=pcmap
 
-def showprofils(sm, figure=None, visu=1, Data=None, bmus=None, scale=None, \
-                Clevel=None, Gscale=0.25, showcellid=None, ColorClass=None) :
+def showprofils(sm, figure=None, figsize=(6,10), visu=1, Data=None, bmus=None, scale=None, \
+                Clevel=None, Gscale=0.25, showcellid=None, ColorClass=None,
+                verbose=False,whiteshadow=True) :
     ''' showprofils (sm, visu, Data, bmus ,scale, Clevel, Gscale)
     | Pour chaque neurone, on représente, dans un subplot, le référent et/ou des
     | données qu'ils a captées sous forme de courbe.
@@ -558,14 +564,14 @@ def showprofils(sm, figure=None, visu=1, Data=None, bmus=None, scale=None, \
     '''
     nbl, nbc = sm.mapsize;
     if visu == 2 or visu == 3 : # Si on veut des données
-        if Data==[] or Data is None :  # Par defaut on prend les données de sm qui
+        if Data is None or not Data.size :  # Par defaut on prend les données de sm qui
             Data = sm.data;            # sont en principe celles d'apprentissage
         else : # on s'assure que les données passée on la meme dim que les codebook
             if Data.ndim != sm.codebook.ndim :
                 print("showprofils : Data must have the same dim as codebooks");
                 sys.exit(0);
         
-        if bmus==[] or bmus is None:
+        if bmus is None or not bmus.size:
             bmus = findbmus(sm, Data);            
         # Ici on peut vérifier que bmus et data ont la même taille
         if np.size(bmus) != np.size(Data,0) :
@@ -579,7 +585,7 @@ def showprofils(sm, figure=None, visu=1, Data=None, bmus=None, scale=None, \
 
     # Color stuff pour éventuellement différencier les référents selon un critère
     if ColorClass is None :
-        if Clevel == [] or Clevel is None :
+        if Clevel is None or not Clevel.size :
             ColorRef = np.ones((sm.nnodes,3)); # par défaut du blanc pour tous les fonds de cellule
         else :
             if np.size(Clevel) != sm.nnodes :
@@ -626,47 +632,120 @@ def showprofils(sm, figure=None, visu=1, Data=None, bmus=None, scale=None, \
     if visu<1 or visu>3 :
        print("showprofils : bad visu value -> turn to 1 (referents only)");
        visu=1;
-       
-    if figure is None :
-        fig = plt.figure();
-        
-    if visu==2 or visu==3 : # Les données
-        inode =  0;
-        for l in np.arange(nbl) :     # en supposant les référents
-            for c in np.arange(nbc) : # numerotés de gauche à droite
+    
+    type_fig = 3
+    
+    if type_fig == 1 or type_fig == 2:
+        if figure is None :
+            fig = plt.figure(figsize=figsize);
+        else:
+            fig = figure
+        if type_fig == 2:
+            grid = Grid(fig, rect=111, nrows_ncols=(nbl,nbc), axes_pad=(0.0,0.03),
+                        share_all=True,label_mode='1')
+    elif type_fig == 3:
+        fig, grid = plt.subplots(nrows=nbl, ncols=nbc,
+                                 sharex=True, sharey=True,
+                                 figsize=figsize,facecolor='w')
+        fig.subplots_adjust(left=0.06, right=0.99, bottom=0.025, top=0.96,
+                            hspace=0.08, wspace=0.02)
+    
+    inode =  0;
+    for l in np.arange(nbl) :     # en supposant les référents
+        for c in np.arange(nbc) : # numerotés de gauche à droite
+            if type_fig == 1:
                 ax = plt.subplot(nbl,nbc,inode+1);
-                idx = np.where(bmus==inode);
+            elif type_fig == 2:
+                ax = grid[inode]
+            elif type_fig == 3:
+                ax = grid[l,c]
+            #
+            if whiteshadow :
+                if visu==2 or visu==3 : # Les données
+                    idx = np.where(bmus==inode);
+                    if np.size(idx) > 0 :
+                        ax.plot(Data[idx[0],:].T,'-w',linewidth=2);
+                if visu==1 or visu==3 : # Les référents  
+                    ax.plot(sm.codebook[inode,:],'-w',linewidth=2);
+            if visu==2 or visu==3 : # Les données
                 if np.size(idx) > 0 :
-                    plt.plot(Data[idx[0],:].T,'-b');
-                #
-                inode +=1;
-                # To have Neurone indice number (if required)
-                if showcellid :
-                    plt.title("Cell N° %d" %(inode),fontsize=10); 
-
-    if visu==1 or visu==3 : # Les référents   
-        inode =  0;
-        for l in np.arange(nbl) :     # en supposant qu'ils sont
-            for c in np.arange(nbc) : # numerotés de gauche à droite
-                ax = plt.subplot(nbl,nbc,inode+1);
-                axx = plt.gca();
-                #
-                plt.plot(sm.codebook[inode,:],'*-r');
+                    ax.plot(Data[idx[0],:].T,'-b',linewidth=1);
+            #
+            if visu==1 or visu==3 : # Les référents  
+                ax.plot(sm.codebook[inode,:],'-r',linewidth=1);
                 if scale==1 :
-                    plt.axis("tight");
+                    ax.axis("tight");
                 elif scale==2 :
-                    plt.axis([0,sm.dim-1,minX,maxX]);
+                    ax.axis([0,sm.dim-1,minX,maxX]);
                 if 1 : # Couleur de fonds qu'il faut faire correspondre à la celle de la classe
                     #ax.set_axis_bgcolor(coloref[0,:])       
                     #ax.set_axis_bgcolor(ColorRef[inode,:])
-                    from matplotlib import __version__ as plt_version
                     if plt_version < '2.0.' :
                         ax.set_axis_bgcolor(ColorClass[Clevel[inode]])
                     else :
-                        ax.set_facecolor(ColorClass[Clevel[inode]])       
-                #
-                inode +=1;
+                        ax.set_facecolor(ColorClass[Clevel[inode]])  
+            #
+            ax.tick_params(labelsize=6)
+            # To have Neurone indice number (if required)
+            if verbose :
+                print("Cell N° {} ({},{})".format(inode+1,l,c)) 
+            if showcellid :
+                ax.set_title("Cell N° {} ({},{})".format(inode+1,l,c),fontsize=6); 
+#            if type_fig == 1:
+#                if c > 0 :           # yticklabels seultmnt pour colonne de gauche des subplots
+#                    ytck = ax.get_yticks()[0]
+#                    ax.set_yticks(ytck,[])
+#                if l < (nbl - 1) :  # xticklabels seultmnt pour ligne d'en bas des subplots
+#                    xtck = ax.get_xticks()[0]
+#                    ax.set_xticks(xtck,[])
+#                ax.autoscale(enable=True, tight=True)
+#            elif type_fig == 3:
+#            if c > 0 :           # pas de yticks ni labels ...
+#                if verbose :
+#                    print(" -- pas de yticks ni labels ...")
+#                ytck = ax.get_yticks()[0]
+#                if np.isscalar(ytck):
+#                    ytck = [ytck]
+#                ax.set_yticks(ytck,[])
+#            if l < (nbl - 1) :   # pas de xticks ni labels ...
+#                if verbose :
+#                    print(" -- pas de xticks ni labels ...")
+#                xtck = ax.get_xticks()[0]
+#                if np.isscalar(xtck):
+#                    xtck = [xtck]
+#                ax.set_xticks(xtck,[])
+            #
+            inode +=1;
 
+#    if visu==1 or visu==3 : # Les référents   
+#        inode =  0;
+#        for l in np.arange(nbl) :     # en supposant qu'ils sont
+#            for c in np.arange(nbc) : # numerotés de gauche à droite
+#                if type_fig == 1:
+#                    ax = plt.subplot(nbl,nbc,inode+1);
+#                elif type_fig == 2:
+#                    ax = grid[inode]
+#                    ax.tick_params(labelsize=4)
+#                elif type_fig == 3:
+#                    ax = grid[l,c]
+#                #axx = plt.gca();
+#                #
+#                ax.plot(sm.codebook[inode,:],'*-r');
+#                if scale==1 :
+#                    ax.axis("tight");
+#                elif scale==2 :
+#                    ax.axis([0,sm.dim-1,minX,maxX]);
+#                if 1 : # Couleur de fonds qu'il faut faire correspondre à la celle de la classe
+#                    #ax.set_axis_bgcolor(coloref[0,:])       
+#                    #ax.set_axis_bgcolor(ColorRef[inode,:])
+#                    from matplotlib import __version__ as plt_version
+#                    if plt_version < '2.0.' :
+#                        ax.set_axis_bgcolor(ColorClass[Clevel[inode]])
+#                    else :
+#                        ax.set_facecolor(ColorClass[Clevel[inode]])       
+#                #
+#                inode +=1;
+    
     fig.patch.set_facecolor('white');
     return 
 

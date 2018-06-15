@@ -25,12 +25,16 @@ Tmodels = Tmodels_anyall;
 Nmodels = len(Tmodels); # print(Nmodels); sys.exit(0)
 #______________________________
 # For the Carte Topo (see also ctObsMdl)
-nbl      = 30;  nbc =  4;  # Taille de la carte
-#nbl      = 36;  nbc =  6;  # Taille de la carte
-#nbl      = 52;  nbc =  8;  # Taille de la carte
+#nbl      = 6;  nbc =  6;  # Taille de la carte
+#nbl      = 30;  nbc =  4;  # Taille de la carte
+nbl      = 36;  nbc =  6;  # Taille de la carte
+nbl      = 52;  nbc =  8;  # Taille de la carte
 #Parm_app = ( 5, 5., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
 Parm_app = ( 50, 5., 1.,  100, 1., 0.1); # Température ini, fin, nb_it
+#Parm_app = ( 500, 5., 1.,  1000, 1., 0.1); # Température ini, fin, nb_it
+#Parm_app = ( 2000, 5., 1.,  5000, 1., 0.1); # Température ini, fin, nb_it
 epoch1,radini1,radfin1,epoch2,radini2,radfin2 = Parm_app
+case_label_base = "Map-{}x{}_Ep1-{}_Ep2-{}".format(nbl, nbc, epoch1, epoch2)
 #______________________________
 # Complémentation des nan pour les modèles
 MDLCOMPLETION = True; # True=>Cas1
@@ -132,7 +136,7 @@ if CENTRED :
 # for CAH for classif with CT (see ctObsMdl for more)
 method_cah = 'ward';      # 'average', 'ward', 'complete','weighted'
 dist_cah   = 'euclidean'; #
-nb_class   = 6; #6, 7, 8  # Nombre de classes retenu
+nb_class   = 7; #6, 7, 8  # Nombre de classes retenu
 ccmap      = cm.jet;      # Accent, Set1, Set1_r, gist_ncar; jet, ... : map de couleur pour les classes
 # pour avoir des couleurs à peu près equivalente pour les plots
 #pcmap     = ccmap(np.arange(1,256,round(256/nb_class)));ko 512ko, 384ko
@@ -160,4 +164,6 @@ AFC_Visu_Classif_Mdl_Clust  = []; # liste des cluster a afficher (à partir de 1
 #Flag visu Modèles Moyen 4CT des cluster
 AFC_Visu_Clust_Mdl_Moy_4CT  = []; # liste des cluster a afficher (à partir de 1)
 #AFC_Visu_Clust_Mdl_Moy_4CT = [1,2,3,4,5,6,7];
+#######################################################################
+case_label="Case_"+SIZE_REDUCTION+"_"+case_label_base
 #######################################################################

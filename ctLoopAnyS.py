@@ -174,13 +174,76 @@ def datacodification4CT(data) :
     if NORMMAX == True :
         Maxi = np.max(Ddata, axis=1);
         Ddata = (Ddata.T / Maxi).T;
-    #if NORMMAX == 2 :
     if CENTRED :
         Ddata  = tls.centred(Ddata,biais=0); # mais en fait ...
     #----
     return data, Ddata, NDdata;
+#
+def plot_classes(sMapO,sst_obs,Dobs,NDobs,listofclasses):
+    Nobs, Lobs, Cobs = np.shape(sst_obs)
+    bmusO  = ctk.mbmus (sMapO, Data=Dobs); # déjà vu ? conditionnellement ?
+    minref = np.min(sMapO.codebook);
+    maxref = np.max(sMapO.codebook);
+    Z_  = linkage(sMapO.codebook, method_cah, dist_cah);
+    #del Z_
+    #
+    nclasses = len(listofclasses)
+    nclassesc = np.ceil(np.sqrt(nclasses));
+    nclassesl = np.ceil(1.0*nclasses/nclassesc);
+
+    for iclass in np.arange(nclasses):
+        nb_class = listofclasses[iclass]
+        class_ref   = fcluster(Z_,nb_class,'maxclust'); # Classes des referents
+        coches = np.arange(nb_class)+1;   # ex 6 classes : [1,2,3,4,5,6]
+        ticks  = coches + 0.5;            # [1.5, 2.5, 3.5, 4.5, 5.5, 6.5]
+        bounds = np.arange(nb_class+1)+1; # pour bounds faut une frontière de plus [1, 2, 3, 4, 5, 6, 7]
+        sztitle = 10;
+        #
+        # Transcodage des indices des classes
+        if TRANSCOCLASSE is not '' :
+            class_ref = transco_class(class_ref,sMapO.codebook,crit=TRANSCOCLASSE);
+        #
+        classe_Dobs = class_ref[bmusO].reshape(NDobs); #(sMapO.dlen)
+        XC_Ogeo     = dto2d(classe_Dobs,Lobs,Cobs,isnumobs); # Classification géographique
+        
+        #>
+        # Nombre de pixels par classe (pour les obs)
+        Nobsc = np.zeros(nb_class)
+        for c in np.arange(nb_class)+1 :
+            iobsc = np.where(classe_Dobs==c)[0]; # Indices des classes c des obs
+            Nobsc[c-1] = len(iobsc);
+        #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        #plt.figure(); plt.imshow(XC_Ogeo, interpolation='none',vmin=1,vmax=nb_class)
+        NclDobs  = len(classe_Dobs)
+        fond_C = np.ones(NclDobs)
+        fond_C = dto2d(fond_C,Lobs,Cobs,isnumobs,missval=0.5)
+        #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        #plt.figure(figsize=(8,6) );
+        plt.subplot(nclassesl,nclassesc,iclass+1)
+        #
+        plt.imshow(XC_Ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
+        hcb    = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
+        hcb.set_ticklabels(coches);
+        hcb.ax.tick_params(labelsize=8)
+        plt.title("{} classes".format(nb_class),fontsize=14)
+        if SIZE_REDUCTION == 'All' :
+            lolast = 4
+        else :
+            lolast = 2
+        if 0 :
+            plt.xticks(np.arange(0,Cobs,lolast), lon[np.arange(0,Cobs,lolast)], rotation=45, fontsize=10)
+            plt.yticks(np.arange(0,Lobs,lolast), lat[np.arange(0,Lobs,lolast)], fontsize=10)
+        else :
+            plt.xticks(np.arange(-0.5,Cobs,lolast), np.round(lon[np.arange(0,Cobs,lolast)]).astype(int), rotation=45, fontsize=10)
+            plt.yticks(np.arange(0.5,Lobs,lolast), np.round(lat[np.arange(0,Lobs,lolast)]).astype(int), fontsize=10)
+        #grid(); # for easier check
+    plt.suptitle("obs, classe géog., Method %s [%s]"%(method_cah,case_label),fontsize=18); #,fontweigth='bold');
+    #plt.show(); sys.exit(0)
+
 #%%----------------------------------------------------------------------
 # Des trucs qui pourront servir
+plt.rcParams.update({'figure.max_open_warning': 0})
+#
 tpgm0 = time();
 plt.ion()
 varnames = np.array(["JAN","FEV","MAR","AVR","MAI","JUI",
@@ -189,8 +252,14 @@ varnames = np.array(["JAN","FEV","MAR","AVR","MAI","JUI",
 #
 #
 #######################################################################
+# eface toutes les fenetres de figures en cours
+plt.close('all')
+#######################################################################
 # PARAMETRAGE (#1) DU CAS
 from ParamCas import *
+
+print("case label: {}\n".format(case_label))
+
 #======================================================================
 #
 #
@@ -338,11 +407,13 @@ print("NDobs(sm.dlen)=%d, dim(Dapp)=%d\nCT : %dx%d=%dunits" \
 #
 # Apprentissage de la carte _________________________
 etape1=[epoch1,radini1,radfin1];    etape2=[epoch2,radini2,radfin2];
-sMapO.train(etape1=etape1,etape2=etape2, verbose='on');
+#sMapO.train(etape1=etape1,etape2=etape2, verbose='on');
+qerr = sMapO.train(etape1=etape1,etape2=etape2, verbose='on', retqerrflg=True);
 # + err topo maison
 bmus2O = ctk.mbmus (sMapO, Data=None, narg=2);
 etO    = ctk.errtopo(sMapO, bmus2O); # dans le cas 'rect' uniquement
-print("Obs, erreur topologique = %.4f" %etO)
+#print("Obs, erreur topologique = %.4f" %etO)
+print("Obs,\n  case: {}\n  tseed={} ... qerr={:8.6f} ... terr={:.4f}".format(case_label,tseed,qerr,etO))
 #
 # Visualisation______________________________________
 if 0 : #==>> la U_matrix
@@ -352,7 +423,12 @@ if 0 : #==>> la U_matrix
 if 0 : #==>> La carte
     ctk.showmap(sMapO,sztext=11,colbar=1,cmap=cm.rainbow,interp=None);
     plt.suptitle("Obs, Les Composantes de la carte", fontsize=16);
-#
+#%%
+plt.figure(figsize=(12,7.5) );
+plot_classes(sMapO,sst_obs,Dobs,NDobs,[4,5,6,7,8,9])
+plt.tight_layout(rect=[0, 0, 1, 0.94])
+
+
 #%% Other stuffs ______________________________________
 bmusO  = ctk.mbmus (sMapO, Data=Dobs); # déjà vu ? conditionnellement ?
 minref = np.min(sMapO.codebook);
@@ -401,12 +477,12 @@ fond_C = dto2d(fond_C,Lobs,Cobs,isnumobs,missval=0.5)
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 #
 if 1 : # for Obs
-    plt.figure(figsize=(6,6) );
+    plt.figure(figsize=(8,6) );
     plt.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
     hcb    = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
     hcb.set_ticklabels(coches);
     hcb.ax.tick_params(labelsize=8)
-    plt.title("obs, classe géographique Method %s"%(method_cah),fontsize=16); #,fontweigth='bold');
+    plt.title("obs, classe géog., Method %s [%s]"%(method_cah,case_label),fontsize=16); #,fontweigth='bold');
     if SIZE_REDUCTION == 'All' :
         lolast = 4
     else :
@@ -420,7 +496,7 @@ if 1 : # for Obs
     #grid(); # for easier check
     #plt.show(); sys.exit(0)
 #
-if 0 : # for obs
+if 1 : # for obs
     plt.figure(figsize=(12,6) );
     TmoymensclassObs = moymensclass(sst_obs,isnumobs,classe_Dobs,nb_class)
     #plt.plot(TmoymensclassObs); plt.axis('tight');
@@ -429,13 +505,17 @@ if 0 : # for obs
     plt.axis('tight');
     plt.xlabel('mois');
     plt.legend(np.arange(nb_class)+1,loc=2,fontsize=8);
-    plt.title("obs, Moy. Mens. par Classe Method %s"%(method_cah),fontsize=16);
+    plt.title("obs, Moy. Mens. par Classe Method %s [%s]"%(method_cah,case_label),fontsize=16);
     #plt.show(); sys.exit(0)
 #
-if 0 :
-    fig = plt.figure(figsize=(6,10) );
-    ctk.showprofils(sMapO, figure=fig, Data=Dobs,visu=3, scale=2,Clevel=class_ref-1,Gscale=0.5,
-                ColorClass=pcmap);
+if 1 :
+    #fig = plt.figure(figsize=(6,10));
+    ctk.showprofils(sMapO, figsize=(6,10), Data=Dobs,visu=3, scale=2,
+                    Clevel=class_ref-1,Gscale=0.5,
+                    ColorClass=pcmap,showcellid=False);
+    plt.suptitle("Map [{}x{}] - [{}]".format(nbl,nbc,case_label),
+                       x=0.5,y=0.99,fontsize=14);
+    #plt.tight_layout(rect=[0, 0, 1, 0.96])
     #plt.show(); sys.exit(0)
 #
 #######################################################################
@@ -619,21 +699,21 @@ if OK104 : # Classification avec, "en transparance", les mals classés
            # par rapport aux obs
     plt.figure(104,figsize=(18,9),facecolor='w')
     plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.05, left=0.05, right=0.90)
-    suptitle104="%sSST(%s)). %s Classification of Completed Models (vs Obs)" \
-                 %(fcodage,DATAMDL,method_cah);
+    suptitle104="%sSST(%s)). [%s] - %s Classification of Completed Models (vs Obs)" \
+                 %(fcodage,DATAMDL,case_label,method_cah);
 if OK105 : #Classification
     plt.figure(105,figsize=(18,9))
     plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.05, left=0.05, right=0.90)
-    suptitle105="%sSST(%s)). %s Classification of Completed Models (vs Obs)" \
-                 %(fcodage,DATAMDL,method_cah);
+    suptitle105="%sSST(%s)). [%s] - %s Classification of Completed Models (vs Obs)" \
+                 %(fcodage,DATAMDL,case_label,method_cah);
 if OK106 : # Courbes des moyennes mensuelles par classe
     plt.figure(106,figsize=(18,9),facecolor='w'); # Moyennes mensuelles par classe
     plt.subplots_adjust(wspace=0.2, hspace=0.2, top=0.93, bottom=0.05, left=0.05, right=0.90)
-    suptitle106="MoyMensClass(%sSST(%s)).) %s Classification of Completed Models (vs Obs)" \
-                 %(fcodage,DATAMDL,method_cah);
+    suptitle106="MoyMensClass(%sSST(%s)).) [%s] - %s Classification of Completed Models (vs Obs)" \
+                 %(fcodage,DATAMDL,case_label,method_cah);
 if OK107 : # Variance (not 'RED' compatible)
-    suptitle107="VARiance(%sSST(%s)).) Variance (by pixel) on Completed Models" \
-                 %(fcodage,DATAMDL);
+    suptitle107="VARiance(%sSST(%s)).) [%s] - Variance (by pixel) on Completed Models" \
+                 %(fcodage,DATAMDL,case_label);
     Dmdl_TVar  = np.ones((Nmodels,NDobs))*np.nan; # Tableau des Variance par pixel sur climatologie
                    # J'utiliserais ainsi showimgdata pour avoir une colorbar commune
 #
@@ -645,16 +725,16 @@ if MCUM  : # # Moyenne des Models climatologiques CUmulés
 if OK108 : # Classification en Model Cumulé Moyen
     plt.figure(108,figsize=(18,9),facecolor='w'); # Moyennes mensuelles par classe
     plt.subplots_adjust(wspace=0.2, hspace=0.2, top=0.93, bottom=0.05, left=0.05, right=0.90)
-    suptitle108="MCUM - %sSST(%s)). %s Classification of Completed Models (vs Obs)" \
-                 %(fcodage,DATAMDL,method_cah);
+    suptitle108="MCUM - %sSST(%s)) [%s] - %s Classification of Completed Models (vs Obs)" \
+                 %(fcodage,DATAMDL,case_label,method_cah);
 #
 # Variance CUMulative
 if OK109 : # Variance sur les Models Cumulés Moyens (not 'RED' compatible)
     Dmdl_TVm = np.ones((Nmodels,NDobs))*np.nan; # Tableau des Variance sur climatologie
                # cumulée, moyennée par pixel. J'utiliserais ainsi showimgdata pour avoir
                # une colorbar commune
-    suptitle109="VCUM - %sSST(%s)). Variance sur la Moyenne Cumulée de Modeles complétés" \
-                 %(fcodage,DATAMDL);
+    suptitle109="VCUM - %sSST(%s)) [%s] -  Variance sur la Moyenne Cumulée de Modeles complétés" \
+                 %(fcodage,DATAMDL,case_label);
 #%%
 #OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
 #OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
@@ -693,7 +773,7 @@ for imodel in np.arange(Nmodels) : ##!!??
     Nmdl, Lmdl, Cmdl = np.shape(sst_mdl)    ##!!??
     NDmdl = len(classe_Dmdl); # needed for 108, ...? 
     #
-    #%%%> l'AFC pourrait aussi etre faite avec ça
+    #%> l'AFC pourrait aussi etre faite avec ça
     if NIJ == 1 : # Nij = card|classes| ; Pourrait semblé inapproprié car les classes
                   # peuvent géographiquement être n'importe où, mais ...               
         Znij_ = [];  
@@ -701,7 +781,7 @@ for imodel in np.arange(Nmodels) : ##!!??
             imdlc = np.where(classe_Dmdl==c+1)[0]; # Indices des classes c du model
             Znij_.append(len(imdlc));  
         TNIJ.append(Znij_);  
-    #%%%<
+    #%<
     #:::>------------------------------------------------------------------
     '''FAUDRA VOIR QUEL INDICE ON MET SUR CHAQUE MODEL,
     ET SI IL FAUDRA FAIRE LA COLORBAR PAR CLASSE SELON CET INDICE !!!??? si c'est possible !!!???
@@ -995,23 +1075,26 @@ if NIJ > 0 : # A.F.C
         else :
             Z_ = linkage(F1U[:,coord2take], metho_, dist_);
         if 1 : # dendrogramme
-            plt.figure(figsize=(16,12));
+            plt.figure(figsize=(17,11));
             R_ = dendrogram(Z_,Nmdlok,'lastp');
             L_ = np.array(lignames)
             plt.xticks((np.arange(len(Tmdlname))*10)+7,L_[R_['leaves']], fontsize=11,
                    rotation=45,horizontalalignment='right', verticalalignment='baseline')
             del R_, L_
-            plt.title("AFC: Coord(%s), dendro. Métho=%s, dist=%s, nb_clust=%d"
-                      %((coord2take+1).astype(str),metho_,dist_,nb_clust))
+            plt.title("AFC: Coord(%s) dendrogram [%s]\nMétho=%s, dist=%s, nb_clust=%d"
+                      %((coord2take+1).astype(str),case_label,metho_,dist_,nb_clust), fontsize=18)
         #
         class_afc = fcluster(Z_,nb_clust,'maxclust');
         #
         figclustmoy = plt.figure(figsize=(16,12));
+        nclustcol = np.round(np.sqrt(nb_clust)).astype(int)
+        nclustlin = np.ceil(7/nclustcol).astype(int)
         for ii in np.arange(nb_clust) :
             iclust  = np.where(class_afc==ii+1)[0];
             #
             # Visu des Classif des modèles des cluster
             if  ii+1 in AFC_Visu_Classif_Mdl_Clust :
+                print("par ici {}".format(ii))
                 plt.figure(figsize=(16,12));
                 for jj in np.arange(len(iclust)) :
                     bmusj_   = ctk.mbmus (sMapO, Data=TDmdl4CT[iclust[jj]]);
@@ -1046,9 +1129,11 @@ if NIJ > 0 : # A.F.C
             #
             # Classification du modèles moyen d'un cluster
 #           plt.figure(figclustmoy.number); plt.subplot(3,3,ii+1);
-            plt.figure(figclustmoy.number,figsize=(16,12)); plt.subplot(4,4,ii+1);
+            plt.figure(figclustmoy.number,figsize=(16,12))
+            plt.subplot(nclustcol,nclustlin,ii+1);
             Perfglob_ = Dgeoclassif(sMapO,CmdlMoy,LObs,CObs,isnumObs);
             plt.title("cluster %d, perf=%.0f%c"%(ii+1,100*Perfglob_,'%'),fontsize=sztitle); #,fontweigth='bold');
+        plt.suptitle("AFC Clusters - [{}]".format(case_label))
         # FIN de la boucle sur le nombre de cluster
         del metho_, dist_, Z_
     # FIN du if 1 : MODELE MOYEN (pondéré ou pas) PAR CLUSTER D'UNE CAH
@@ -1070,7 +1155,7 @@ if NIJ > 0 : # A.F.C
             N2take = 10;
             print("\nd2u :");
             for i in np.arange(N2take) :
-                print("\'"+Tmdlname[iord[i]],end="\',"); #?
+                print('\''+Tmdlname[iord[i]],end='\','); #?
             print();
     #
     # Nuage de l'AFC
@@ -1079,11 +1164,11 @@ if NIJ > 0 : # A.F.C
     if 1 : # ori afc avec tous les points
         afcnuage(F1U,cpa=pa,cpb=po,Xcol=class_afc,K=K,xoomK=xoomK,linewidths=2,indname=lignames); #,cmap=cm.jet);
         if NIJ==1 :
-            plt.title("%sSST(%s)). %s%d AFC on classes of Completed Models (vs Obs)" \
-                 %(fcodage,DATAMDL,method_cah,nb_class));
+            plt.title("%sSST(%s)) [%s]\n%s%d AFC on classes of Completed Models (vs Obs)" \
+                 %(fcodage,DATAMDL,case_label,method_cah,nb_class),fontsize=16);
         elif NIJ==3 :
-            plt.title("%sSST(%s)). %s%d AFC on good classes of Completed Models (vs Obs)" \
-                 %(fcodage,DATAMDL,method_cah,nb_class));
+            plt.title("%sSST(%s)) [%s]\n%s%d AFC on good classes of Completed Models (vs Obs)" \
+                 %(fcodage,DATAMDL,case_label,method_cah,nb_class),fontsize=16);
     # Limiter les points aux contributions les plus fortes
     def afclim(K,xoomK) :
         if 0 : # Sur les axes considérés
@@ -1094,8 +1179,8 @@ if NIJ > 0 : # A.F.C
             afcnuage(F1U[Ix_,:],cpa=pa,cpb=po,Xcol=np.arange(len(Ix_)),K=K[Ix_],xoomK=xoomK,linewidths=2,indname=lignames[Ix_]);
             #plt.title("%s%s(SST%d-%d)). %s%d AFC on good classes of Completed Models (vs Obs) (CtrA lim = %.3f)" \
             #     %(fcodage,DATARUN,andeb,anfin,method_cah,nb_class, lim_));
-            plt.title("%sSST(%s)). %s%d AFC on good classes of Completed Models (vs Obs) (CtrA lim = %.3f)" \
-                 %(fcodage,DATAMDL,method_cah,nb_class, lim_));
+            plt.title("[%s] %sSST(%s)) [%s]\n%s%d AFC on good classes of Completed Models (vs Obs) (CtrA lim = %.3f)" \
+                 %(fcodage,DATAMDL,case_label,method_cah,nb_class, lim_));
             del lim_, Ia_, Io_, Ix_
         if 1 : # Sur tous les axes
             lim_ = 0.13;
@@ -1104,8 +1189,8 @@ if NIJ > 0 : # A.F.C
             afcnuage(F1U[Ix_,:],cpa=pa,cpb=po,Xcol=np.arange(len(Ix_)),K=K[Ix_],xoomK=xoomK,linewidths=2,indname=lignames[Ix_]);
             #plt.title("%s%s(SST%d-%d)). %s%d AFC on good classes of Completed Models (vs Obs) (CtrA lim = %.3f)" \
             #     %(fcodage,DATARUN,andeb,anfin,method_cah,nb_class, lim_));
-            plt.title("%sSST(%s)). %s%d AFC on good classes of Completed Models (vs Obs) (CtrA lim = %.3f)" \
-                 %(fcodage,DATAMDL,method_cah,nb_class, lim_));
+            plt.title("%sSST(%s)) [%s]\n%s%d AFC on good classes of Completed Models (vs Obs) (CtrA lim = %.3f)" \
+                 %(fcodage,DATAMDL,case_label,method_cah,nb_class, lim_));
             del lim_, X_, Ix_
     if 0 :
         afclim(K,xoomK);
@@ -1146,11 +1231,11 @@ if NIJ > 0 : # A.F.C
     if 1 : # Inertie
         inertie, icum = acp.phinertie(VAPT); #print("inertie=:"); tls.tprin(inertie," %6.3f ")
         if NIJ==1 :
-            plt.title("%sSST(%s)). %s%d AFC on classes of Completed Models (vs Obs)" \
-                     %(fcodage,DATAMDL,method_cah,nb_class));
+            plt.title("%sSST(%s)) [%s]\n%s%d AFC on classes of Completed Models (vs Obs)" \
+                     %(fcodage,DATAMDL,case_label,method_cah,nb_class));
         elif NIJ==3 :
-            plt.title("%sSST(%s)). %s%d AFC on good classes of Completed Models (vs Obs)" \
-                     %(fcodage,DATAMDL,method_cah,nb_class));
+            plt.title("%sSST(%s)) [%s]\n%s%d AFC on good classes of Completed Models (vs Obs)" \
+                     %(fcodage,DATAMDL,case_label,method_cah,nb_class));
     #
     if 0 : # Contributions Absolues lignes (déjà calculé)
            # présentation en courbe (+ somme)
@@ -1307,7 +1392,7 @@ if 1 :
     #
     print("%d modele(s) de generalisation : %s "%(len(TMixtMdl),TMixtMdl))
     #
-    mixtgeneralisation (TMixtMdl);
+    mixtgeneralisation(TMixtMdl);
 #**********************************************************************
 #**********************************************************************
 #___________
@@ -1316,10 +1401,11 @@ plt.show();
 print("WITHANO,UISST,climato,NIJ :\n", WITHANO, UISST,climato,NIJ)
 import os
 print("whole time code %s: %f" %(os.path.basename(sys.argv[0]), time()-tpgm0));
+print("\n<end '{}'>".format(case_label))
 
 #======================================================================
 
-
+#%%
 
 
 
