@@ -1,5 +1,6 @@
 # -*- coding: cp1252 -*-
 import sys
+import os
 import time as time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -46,7 +47,8 @@ def afcnuage (CP,cpa,cpb,Xcol,K,xoomK=500,linewidths=1,indname=None,
             obsname = indname[lenXcol:lenCP];
             indname = indname[0:lenXcol];
         #
-        plt.figure(figsize=(16,12));
+        fig = plt.figure(figsize=(16,12));
+        fignum = fig.number
         my_norm = plt.Normalize()
         my_normed_data = my_norm(Xcol)
         ec_colors = cmap(my_normed_data) # a Nx4 array of rgba value
@@ -240,16 +242,14 @@ def plot_classes(sMapO,sst_obs,Dobs,NDobs,listofclasses):
     plt.suptitle("obs, classe géog., Method %s [%s]"%(method_cah,case_label),fontsize=18); #,fontweigth='bold');
     #plt.show(); sys.exit(0)
 
-#%%----------------------------------------------------------------------
+#%% ###################################################################
+# INITIALISATION
 # Des trucs qui pourront servir
+#======================================================================
 plt.rcParams.update({'figure.max_open_warning': 0})
 #
 tpgm0 = time();
 plt.ion()
-varnames = np.array(["JAN","FEV","MAR","AVR","MAI","JUI",
-                    "JUI","AOU","SEP","OCT","NOV","DEC"]);
-#######################################################################
-#
 #
 #######################################################################
 # eface toutes les fenetres de figures en cours
@@ -258,15 +258,27 @@ plt.close('all')
 # PARAMETRAGE (#1) DU CAS
 from ParamCas import *
 
+varnames = np.array(["JAN","FEV","MAR","AVR","MAI","JUI",
+                    "JUI","AOU","SEP","OCT","NOV","DEC"]);
+
 print("case label: {}\n".format(case_label))
+
+if SAVEFIG :
+    if not os.path.exists(FIGSDIR) :
+        os.makedirs(FIGSDIR)
+    case_figs_dir = os.path.join(FIGSDIR,case_label)
+    if not os.path.exists(case_figs_dir) :
+        os.makedirs(case_figs_dir)
+
+print(os.path.exists("/home/el/myfile.txt"))
 
 #======================================================================
 #
 #
-#######################################################################
+#%% ####################################################################
 # ACQUISITION DES DONNEES D'OBSERVATION (et application des codifications)
 #======================================================================
-#%% Lecture des Obs____________________________________
+# Lecture des Obs____________________________________
 if DATAOBS == "raverage_1975_2005" :
     if 0 : # Ca c'était avant
         #sst_obs = np.load("Datas/sst_obs_1854a2005_25L36C.npy")
@@ -359,7 +371,7 @@ X_       = sst_obs[0].reshape(Lobs*Cobs);
 isnanobs = np.where(np.isnan(X_))[0];
 isnumobs = np.where(~np.isnan(X_))[0];
 del X_;
-#%%_________________________
+#_________________________
 # Codification des Obs 4CT 
 sst_obs, Dobs, NDobs = datacodification4CT(sst_obs);
 #-------------------------
@@ -382,7 +394,9 @@ if 0 : # Visu (et sauvegarde éventuelle de la figure) des données telles
     plt.suptitle("%sSST%d-%d). Obs for CT\nmin=%f, max=%f, moy=%f, std=%f"
                  %(fcodage,andeb,anfin,minDobs,maxDobs,moyDobs,stdDobs));
     if 0 : #SAVEFIG : # sauvegarde de la figure
-        plt.savefig("%sObs4CT"%(fshortcode))
+        fig = plt.gcf() # figure en cours ...
+        fignum = fig.number # numero de figure en cours ...
+        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}Obs4CT".format(fignum,fshortcode))
     #X_ = np.mean(Dobs, axis=1); X_ = X_.reshape(743,1); #rem = 0.0 when anomalies
     plt.show(); sys.exit(0)
 #%%
@@ -423,13 +437,21 @@ if 0 : #==>> la U_matrix
 if 0 : #==>> La carte
     ctk.showmap(sMapO,sztext=11,colbar=1,cmap=cm.rainbow,interp=None);
     plt.suptitle("Obs, Les Composantes de la carte", fontsize=16);
-#%%
-plt.figure(figsize=(12,7.5) );
-plot_classes(sMapO,sst_obs,Dobs,NDobs,[4,5,6,7,8,9])
-plt.tight_layout(rect=[0, 0, 1, 0.94])
+#
+if True :
+    # Figure par clases pour plussieurs valeurs de nombre de classes
+    list_of_classes_to_show = [4,5,6,7,8,9]
+    fig = plt.figure(figsize=(12,7.5));
+    fignum = fig.number
+    plot_classes(sMapO,sst_obs,Dobs,NDobs,list_of_classes_to_show)
+    plt.tight_layout(rect=[0, 0, 1, 0.94])
+    if SAVEFIG :
+        #plt.savefig(case_figs_dir+os.sep+"%s%s%dMdlvsObstrans"%(fshortcode,method_cah,nb_class))
+        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}{}_{}_ObsShow-{:d}-{:d}-Classes".format(fignum,
+                    fprefixe,SIZE_REDUCTION,fshortcode,
+                    list_of_classes_to_show[0],list_of_classes_to_show[-1]))
 
-
-#%% Other stuffs ______________________________________
+# Other stuffs ______________________________________
 bmusO  = ctk.mbmus (sMapO, Data=Dobs); # déjà vu ? conditionnellement ?
 minref = np.min(sMapO.codebook);
 maxref = np.max(sMapO.codebook);
@@ -455,7 +477,7 @@ Nobsc = np.zeros(nb_class)
 for c in np.arange(nb_class)+1 :
     iobsc = np.where(classe_Dobs==c)[0]; # Indices des classes c des obs
     Nobsc[c-1] = len(iobsc);
-#%%<
+#
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # Pour différencier la zone entiere de la zone REDuite, je conviens que le o
@@ -475,14 +497,16 @@ NDobs  = len(classe_Dobs)
 fond_C = np.ones(NDobs)
 fond_C = dto2d(fond_C,Lobs,Cobs,isnumobs,missval=0.5)
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-#
+#%%
 if 1 : # for Obs
-    plt.figure(figsize=(8,6) );
+    fig = plt.figure(figsize=(8,6));
+    fignum = fig.number
     plt.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
     hcb    = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
     hcb.set_ticklabels(coches);
     hcb.ax.tick_params(labelsize=8)
-    plt.title("obs, classe géog., Method %s [%s]"%(method_cah,case_label),fontsize=16); #,fontweigth='bold');
+    plt.title("Obs {:d} Classes, classe géog., Method {}\n[{}]".format(nb_class,
+        method_cah,case_label),fontsize=16); #,fontweigth='bold');
     if SIZE_REDUCTION == 'All' :
         lolast = 4
     else :
@@ -495,9 +519,14 @@ if 1 : # for Obs
         plt.yticks(np.arange(0.5,Lobs,lolast), np.round(lat[np.arange(0,Lobs,lolast)]).astype(int), fontsize=10)
     #grid(); # for easier check
     #plt.show(); sys.exit(0)
+    if SAVEFIG :
+        #plt.savefig(case_figs_dir+os.sep+"%s%s%dMdlvsObstrans"%(fshortcode,method_cah,nb_class))
+        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}{}_{}_Obs-{:d}-Classes".format(fignum,
+                    fprefixe,SIZE_REDUCTION,fshortcode,nb_class))
 #
-if 1 : # for obs
-    plt.figure(figsize=(12,6) );
+if 0 : # for obs
+    fig = plt.figure(figsize=(12,6) );
+    fignum = fig.number
     TmoymensclassObs = moymensclass(sst_obs,isnumobs,classe_Dobs,nb_class)
     #plt.plot(TmoymensclassObs); plt.axis('tight');
     for i in np.arange(nb_class) :
@@ -505,18 +534,28 @@ if 1 : # for obs
     plt.axis('tight');
     plt.xlabel('mois');
     plt.legend(np.arange(nb_class)+1,loc=2,fontsize=8);
-    plt.title("obs, Moy. Mens. par Classe Method %s [%s]"%(method_cah,case_label),fontsize=16);
+    plt.title("Obs {} Classes, Moy. Mens. par Classe Method {} [{}]".format(nb_class,method_cah,case_label),fontsize=16);
     #plt.show(); sys.exit(0)
+    if SAVEFIG :
+        #plt.savefig(case_figs_dir+os.sep+"%s%s%dMdlvsObstrans"%(fshortcode,method_cah,nb_class))
+        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}{}_{}_ObsMoyMensByClass-{:d}-Classes".format(fignum,
+                    fprefixe,SIZE_REDUCTION,fshortcode,nb_class))
 #
-if 1 :
+if 0 :
     #fig = plt.figure(figsize=(6,10));
     ctk.showprofils(sMapO, figsize=(6,10), Data=Dobs,visu=3, scale=2,
                     Clevel=class_ref-1,Gscale=0.5,
                     ColorClass=pcmap,showcellid=False);
-    plt.suptitle("Map [{}x{}] - [{}]".format(nbl,nbc,case_label),
-                       x=0.5,y=0.99,fontsize=14);
+    fig = plt.gcf() # figure en cours ...
+    fignum = fig.number # numero de figure en cours ...
+    plt.suptitle("Obs {} Classes, Moy. Mens. par Classe Method {}\n[{}]".format(nb_class,
+            method_cah,case_label),x=0.5,y=0.99,fontsize=14);
     #plt.tight_layout(rect=[0, 0, 1, 0.96])
     #plt.show(); sys.exit(0)
+    if SAVEFIG :
+        #plt.savefig(case_figs_dir+os.sep+"%s%s%dMdlvsObstrans"%(fshortcode,method_cah,nb_class))
+        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}{}_{}_ObsMoyMensByClassByRef-{:d}-Classes".format(fignum,
+                    fprefixe,SIZE_REDUCTION,fshortcode,nb_class))
 #
 #######################################################################
 #
@@ -697,21 +736,22 @@ IMaxPerfglob_Qm = 0;   # prendre dans la stratégie du "meilleur cumul moyen"
 # l'Init des figures à produire doit pouvoir etre placé ici ##!!?? (sauf la 106)
 if OK104 : # Classification avec, "en transparance", les mals classés
            # par rapport aux obs
-    plt.figure(104,figsize=(18,9),facecolor='w')
+    fig104 = plt.figure(104,figsize=(18,9),facecolor='w')
     plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.05, left=0.05, right=0.90)
     suptitle104="%sSST(%s)). [%s] - %s Classification of Completed Models (vs Obs)" \
                  %(fcodage,DATAMDL,case_label,method_cah);
 if OK105 : #Classification
-    plt.figure(105,figsize=(18,9))
+    fig105 = plt.figure(105,figsize=(18,9))
     plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.05, left=0.05, right=0.90)
     suptitle105="%sSST(%s)). [%s] - %s Classification of Completed Models (vs Obs)" \
                  %(fcodage,DATAMDL,case_label,method_cah);
 if OK106 : # Courbes des moyennes mensuelles par classe
-    plt.figure(106,figsize=(18,9),facecolor='w'); # Moyennes mensuelles par classe
+    fig106 = plt.figure(106,figsize=(18,9),facecolor='w'); # Moyennes mensuelles par classe
     plt.subplots_adjust(wspace=0.2, hspace=0.2, top=0.93, bottom=0.05, left=0.05, right=0.90)
     suptitle106="MoyMensClass(%sSST(%s)).) [%s] - %s Classification of Completed Models (vs Obs)" \
                  %(fcodage,DATAMDL,case_label,method_cah);
 if OK107 : # Variance (not 'RED' compatible)
+    fig107 = plt.figure(107,figsize=(18,9),facecolor='w'); # Moyennes mensuelles par classe
     suptitle107="VARiance(%sSST(%s)).) [%s] - Variance (by pixel) on Completed Models" \
                  %(fcodage,DATAMDL,case_label);
     Dmdl_TVar  = np.ones((Nmodels,NDobs))*np.nan; # Tableau des Variance par pixel sur climatologie
@@ -723,13 +763,14 @@ if MCUM  : # # Moyenne des Models climatologiques CUmulés
 #
 # Moyenne CUMulative
 if OK108 : # Classification en Model Cumulé Moyen
-    plt.figure(108,figsize=(18,9),facecolor='w'); # Moyennes mensuelles par classe
+    fig108 = plt.figure(108,figsize=(18,9),facecolor='w'); # Moyennes mensuelles par classe
     plt.subplots_adjust(wspace=0.2, hspace=0.2, top=0.93, bottom=0.05, left=0.05, right=0.90)
     suptitle108="MCUM - %sSST(%s)) [%s] - %s Classification of Completed Models (vs Obs)" \
                  %(fcodage,DATAMDL,case_label,method_cah);
 #
 # Variance CUMulative
 if OK109 : # Variance sur les Models Cumulés Moyens (not 'RED' compatible)
+    fig109 = plt.figure(109,figsize=(18,9),facecolor='w'); # Moyennes mensuelles par classe
     Dmdl_TVm = np.ones((Nmodels,NDobs))*np.nan; # Tableau des Variance sur climatologie
                # cumulée, moyennée par pixel. J'utiliserais ainsi showimgdata pour avoir
                # une colorbar commune
@@ -803,7 +844,7 @@ for imodel in np.arange(Nmodels) : ##!!??
     if OK104 : # Classification avec, "en transparance", les pixels mals
                # classés par rapport aux obs. (pour les modèles les Perf
                # par classe sont en colorbar)
-        plt.figure(104); plt.subplot(nbsubl,nbsubc,isubplot);
+        plt.figure(num=fig104.number); plt.subplot(nbsubl,nbsubc,isubplot);
         X_ = dto2d(classe_DD,Lobs,Cobs,isnumobs); #X_= classgeo(sst_obs, classe_DD);
         plt.imshow(fond_C, interpolation='none', cmap=cm.gray,vmin=0,vmax=1)
         if FONDTRANS == "Obs" :
@@ -819,7 +860,7 @@ for imodel in np.arange(Nmodels) : ##!!??
         hcb.ax.tick_params(labelsize=8)
         #
     if OK105 : # Classification (pour les modèles les Perf par classe sont en colorbar)
-        plt.figure(105); plt.subplot(nbsubl,nbsubc,isubplot);
+        plt.figure(num=fig105.number); plt.subplot(nbsubl,nbsubc,isubplot);
         plt.imshow(fond_C, interpolation='none', cmap=cm.gray,vmin=0,vmax=1)
         plt.imshow(XC_mgeo, interpolation='none',cmap=ccmap, vmin=1,vmax=nb_class);
         hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
@@ -830,7 +871,7 @@ for imodel in np.arange(Nmodels) : ##!!??
         plt.title("%s, perf=%.0f%c"%(mdlname,100*Perfglob,'%'),fontsize=sztitle);
         #
     if OK106 : # Courbes des moyennes mensuelles par classe
-        plt.figure(106); plt.subplot(nbsubl,nbsubc,isubplot);
+        plt.figure(num=fig106.number); plt.subplot(nbsubl,nbsubc,isubplot);
         for i in np.arange(nb_class) :
             plt.plot(Tmoymensclass[imodel,:,i],'.-',color=pcmap[i]);
         plt.axis([0, 11, min_moymensclass, max_moymensclass]); 
@@ -844,7 +885,7 @@ for imodel in np.arange(Nmodels) : ##!!??
         DMdl_Qm = DMdl_Q / (imodel+1); # Moyenne Zone
         #
     if OK108 : # Classification en Model Cumulé Moyen (Perf par classe en colorbar)
-        plt.figure(108); plt.subplot(nbsubl,nbsubc,isubplot);
+        plt.figure(num=fig108.number); plt.subplot(nbsubl,nbsubc,isubplot);
         bmusMdl_Qm = ctk.mbmus (sMapO, Data=DMdl_Qm);
         classe_DMdl_Qm= class_ref[bmusMdl_Qm].reshape(NDmdl);
                        # Ici classe_D* correspond à un résultats de classification
@@ -882,7 +923,8 @@ for imodel in np.arange(Nmodels) : ##!!??
 isubplot = 49; 
 #isubplot = isubplot + 1; # Michel (ou pas ?)
 if OK104 : # Obs for 104
-    plt.figure(104); plt.subplot(nbsubl,nbsubc,isubplot);
+    fignum = fig104.number
+    plt.figure(num=fignum); plt.subplot(nbsubl,nbsubc,isubplot);
     plt.imshow(fond_C, interpolation='none', cmap=cm.gray,vmin=0,vmax=1)
     plt.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
     hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
@@ -894,10 +936,11 @@ if OK104 : # Obs for 104
     #grid(); # for easier check
     plt.suptitle(suptitle104)
     if SAVEFIG :
-        #plt.savefig("%s%s%dMdlvsObstrans"%(fshortcode,method_cah,nb_class))
-        plt.savefig("%s%s_%s%s%dMdlvsObstrans"%(fprefixe,SIZE_REDUCTION,fshortcode,method_cah,nb_class))
+        #plt.savefig(case_figs_dir+os.sep+"%s%s%dMdlvsObstrans"%(fshortcode,method_cah,nb_class))
+        plt.savefig(case_figs_dir+os.sep+"F%d_%s%s_%s%s%dMdlvsObstrans"%(fignum,fprefixe,SIZE_REDUCTION,fshortcode,method_cah,nb_class))
 if OK105 : # Obs for 105
-    plt.figure(105); plt.subplot(nbsubl,nbsubc,isubplot);
+    fignum = fig105.number
+    plt.figure(num=fignum); plt.subplot(nbsubl,nbsubc,isubplot);
     plt.imshow(fond_C, interpolation='none', cmap=cm.gray,vmin=0,vmax=1)
     plt.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
     hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
@@ -909,10 +952,11 @@ if OK105 : # Obs for 105
     #grid(); # for easier check
     plt.suptitle(suptitle105)
     if SAVEFIG :
-        #plt.savefig("%s%s%dMdl"%(fshortcode,method_cah,nb_class))
-        plt.savefig("%s%s_%s%s%dMdl"%(fprefixe,SIZE_REDUCTION,fshortcode,method_cah,nb_class))
+        #plt.savefig(case_figs_dir+os.sep+"%s%s%dMdl"%(fshortcode,method_cah,nb_class))
+        plt.savefig(case_figs_dir+os.sep+"F%d_%s%s_%s%s%dMdl"%(fignum,fprefixe,SIZE_REDUCTION,fshortcode,method_cah,nb_class))
 if OK106 : # Obs for 106
-    plt.figure(106); plt.subplot(nbsubl,nbsubc,isubplot);
+    fignum = fig106.number
+    plt.figure(num=fignum); plt.subplot(nbsubl,nbsubc,isubplot);
     TmoymensclassObs = moymensclass(sst_obs,isnumobs,classe_Dobs,nb_class); 
     for i in np.arange(nb_class) :
         plt.plot(TmoymensclassObs[:,i],'.-',color=pcmap[i]);
@@ -926,33 +970,46 @@ if OK106 : # Obs for 106
     print(min_moymensclass, max_moymensclass);
     plt.suptitle(suptitle106)
     if SAVEFIG :
-        #plt.savefig("%s%s%dmoymensclass"%(fshortcode,method_cah,nb_class))
-        plt.savefig("%s%s_%s%s%dmoymensclass"%(fprefixe,SIZE_REDUCTION,fshortcode,method_cah,nb_class))
+        #plt.savefig(case_figs_dir+os.sep+"%s%s%dmoymensclass"%(fshortcode,method_cah,nb_class))
+        plt.savefig(case_figs_dir+os.sep+"F%d_%s%s_%s%s%dmoymensclass"%(fignum,fprefixe,SIZE_REDUCTION,fshortcode,method_cah,nb_class))
 #
 if OK107 or OK109 : # Calcul de la variance des obs par pixel de la climatologie
-    Tlabs = np.copy(Tmdlname);   
-    Tlabs = np.append(Tlabs,'');                # Pour le subplot vide
-    Tlabs = np.append(Tlabs,'Observations');    # Pour les Obs
     varobs= np.ones(Lobs*Cobs)*np.nan;          # Variances des ...
     varobs[isnumobs] = np.var(Dobs, axis=1, ddof=0); # ... Obs par pixel
 #
 if OK107 : # Variance par pixels des modèles
+    fignum = fig107.number
+    plt.figure(num=fignum);
+    # donnees
     X_ = np.ones((Nmodels,Lobs*Cobs))*np.nan;
     X_[:,isnumobs] = Dmdl_TVar
-    # Rajouter nan pour le subplot vide
-    X_    = np.concatenate(( X_, np.ones((1,Lobs*Cobs))*np.nan))
+    # Labels
+    Tlabs = np.copy(Tmdlname);   
+    nmodplus=Nmodels
+    if Nmodels < 49 :
+        for iblank in np.arange(Nmodels,49 - 1) :
+            nmodplus += 1
+            # Rajouter nan pour le subplot vide
+            X_ = np.concatenate((X_, np.ones((1,Lobs*Cobs))*np.nan))
+            Tlabs = np.append(Tlabs,'');                # Pour le subplot vide
+    nmodplus += 1
     # Rajout de la variance des obs
-    X_    = np.concatenate((X_, varobs.reshape(1,Lobs*Cobs)))
+    X_ = np.concatenate((X_, varobs.reshape(1,Lobs*Cobs)))
+    Tlabs = np.append(Tlabs,'Observations');    # Pour les Obs
     #
-    showimgdata(X_.reshape(Nmodels+2,1,Lobs,Cobs), Labels=Tlabs, n=Nmodels+2,fr=0,
-                vmin=np.nanmin(Dmdl_TVar),vmax=np.nanmax(Dmdl_TVar),fignum=107);
+    showimgdata(X_.reshape(nmodplus,1,Lobs,Cobs), Labels=Tlabs, n=nmodplus,fr=0,
+                vmin=np.nanmin(Dmdl_TVar),vmax=np.nanmax(Dmdl_TVar),
+                wspace=0.00, hspace=0.14, top=0.93, bottom=0.05, left=0.00, right=1.00,
+                y=0.94, # position relative y des titres
+                sztext=sztitle,cbpos='vertical',fignum=fignum);
     del X_
     plt.suptitle(suptitle107);
     if SAVEFIG :
-        plt.savefig("%sVAR_%s_%sMdl"%(fprefixe,SIZE_REDUCTION,fshortcode))
+        plt.savefig(case_figs_dir+os.sep+"F%d_%sVAR_%s_%sMdl"%(fignum,fprefixe,SIZE_REDUCTION,fshortcode))
 #
 if OK108 : # idem OK105, but ...
-    plt.figure(108); plt.subplot(nbsubl,nbsubc,isubplot);
+    fignum = fig108.number
+    plt.figure(num=fignum); plt.subplot(nbsubl,nbsubc,isubplot);
     plt.imshow(fond_C, interpolation='none', cmap=cm.gray,vmin=0,vmax=1)
     plt.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
     hcb = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
@@ -964,22 +1021,37 @@ if OK108 : # idem OK105, but ...
     #grid(); # for easier check
     plt.suptitle(suptitle108);
     if SAVEFIG :
-        plt.savefig("%sMCUM_%s_%s%s%dMdl"%(fprefixe,SIZE_REDUCTION,fshortcode,method_cah,nb_class))
+        plt.savefig(case_figs_dir+os.sep+"F%d_%sMCUM_%s_%s%s%dMdl"%(fignum,fprefixe,SIZE_REDUCTION,fshortcode,method_cah,nb_class))
 #
 if OK109 : # Variance par pixels des moyenne des modèles cumulés
+    fignum = fig109.number
+    plt.figure(num=fignum);
+    # donnees
     X_ = np.ones((Nmodels,Lobs*Cobs))*np.nan;
     X_[:,isnumobs] = Dmdl_TVm
-    # Rajouter nan pour le subplot vide
-    X_ = np.concatenate(( X_, np.ones((1,Lobs*Cobs))*np.nan))
+    # Labels
+    Tlabs = np.copy(Tmdlname);   
+    nmodplus=Nmodels
+    if Nmodels < 49 :
+        for iblank in np.arange(Nmodels,49 - 1) :
+            nmodplus += 1
+            # Rajouter nan pour le subplot vide
+            X_ = np.concatenate((X_, np.ones((1,Lobs*Cobs))*np.nan))
+            Tlabs = np.append(Tlabs,'');                # Pour le subplot vide
+    nmodplus += 1
     # Rajout de la variance des obs
     X_ = np.concatenate((X_, varobs.reshape(1,Lobs*Cobs)))
+    Tlabs = np.append(Tlabs,'Observations');    # Pour les Obs
     #
-    showimgdata(X_.reshape(Nmodels+2,1,Lobs,Cobs), Labels=Tlabs, n=Nmodels+2,fr=0,
-                vmin=np.nanmin(Dmdl_TVm),vmax=np.nanmax(Dmdl_TVm),fignum=109);
+    showimgdata(X_.reshape(nmodplus,1,Lobs,Cobs), Labels=Tlabs, n=nmodplus,fr=0,
+                vmin=np.nanmin(Dmdl_TVm),vmax=np.nanmax(Dmdl_TVm),
+                wspace=0.00, hspace=0.14, top=0.93, bottom=0.05, left=0.00, right=1.00,
+                y=0.94, # position relative y des titres
+                sztext=sztitle,cbpos='vertical',fignum=fignum);
     del X_
     plt.suptitle(suptitle109);
     if SAVEFIG :
-        plt.savefig("%sVCUM_%s_%sMdl"%(fprefixe,SIZE_REDUCTION,fshortcode))
+        plt.savefig(case_figs_dir+os.sep+"F%d_%sVCUM_%s_%sMdl"%(fignum,fprefixe,SIZE_REDUCTION,fshortcode))
 #
 ##---------------------------------------------------------------------
 # Redimensionnement de Tperfglob au nombre de modèles effectif
@@ -994,7 +1066,8 @@ if 0 : # (print) Tableau des performances
         print(Tperfglob[i])
 #:::>
 if 1 : # Tableau des performances en figure de courbes
-    plt.figure(facecolor='w'); plt.plot(Tperfglob,'.-');
+    fig = plt.figure(facecolor='w'); plt.plot(Tperfglob,'.-');
+    fignum = fig.number
     plt.axis("tight"); plt.grid('on')
     plt.xticks(np.arange(Nmodels),Tmdlname, fontsize=8, rotation=45,
                horizontalalignment='right', verticalalignment='baseline');
@@ -1075,7 +1148,8 @@ if NIJ > 0 : # A.F.C
         else :
             Z_ = linkage(F1U[:,coord2take], metho_, dist_);
         if 1 : # dendrogramme
-            plt.figure(figsize=(17,11));
+            fig = plt.figure(figsize=(17,11));
+            fignum = fig.number
             R_ = dendrogram(Z_,Nmdlok,'lastp');
             L_ = np.array(lignames)
             plt.xticks((np.arange(len(Tmdlname))*10)+7,L_[R_['leaves']], fontsize=11,
@@ -1087,6 +1161,7 @@ if NIJ > 0 : # A.F.C
         class_afc = fcluster(Z_,nb_clust,'maxclust');
         #
         figclustmoy = plt.figure(figsize=(16,12));
+        figclustmoynum = figclustmoy.number
         nclustcol = np.round(np.sqrt(nb_clust)).astype(int)
         nclustlin = np.ceil(7/nclustcol).astype(int)
         for ii in np.arange(nb_clust) :
@@ -1095,7 +1170,8 @@ if NIJ > 0 : # A.F.C
             # Visu des Classif des modèles des cluster
             if  ii+1 in AFC_Visu_Classif_Mdl_Clust :
                 print("par ici {}".format(ii))
-                plt.figure(figsize=(16,12));
+                fig = plt.figure(figsize=(16,12));
+                fignum = fig.number
                 for jj in np.arange(len(iclust)) :
                     bmusj_   = ctk.mbmus (sMapO, Data=TDmdl4CT[iclust[jj]]);
                     classej_ = class_ref[bmusj_].reshape(NDmdl);
@@ -1241,7 +1317,8 @@ if NIJ > 0 : # A.F.C
            # présentation en courbe (+ somme)
         CtrAi = np.concatenate( (CAi, np.sum(CAi,axis=1).reshape(len(CAi),1)),axis=1)
         leg = list((np.arange(nb_class-1)+1).astype(str)); leg.append('sum')
-        plt.figure(); plt.plot(CtrAi); plt.legend(leg);
+        fig = plt.figure(); fignum = fig.number
+        plt.plot(CtrAi); plt.legend(leg);
         plt.xticks(np.arange(Nmdlok),Tm_, fontsize=8, rotation=45,
                    horizontalalignment='right', verticalalignment='baseline');
         plt.title("AFC: Contributions Absolues lignes (i.e. modèle) pour chaque axe");
@@ -1309,7 +1386,8 @@ def mixtgeneralisation (TMixtMdl) :
                      np.max(MdlMoy),np.mean(MdlMoy),np.std(MdlMoy)))
     #
     # Classification du modèles moyen
-    plt.figure();
+    fig = plt.figure();
+    fignum = fig.number
     Perfglob_ = Dgeoclassif(sMapO,MdlMoy,LObs,CObs,isnumObs);
     ##!!?? plt.title("MdlMoy(%s), perf=%.0f%c"%(Tmdlok[IMixtMdl,0],100*Perfglob_,'%'),fontsize=sztitle); #,fontweigth='bold');
     plt.title("MdlMoy(%s), perf=%.0f%c"%(Tmdlname[IMixtMdl],100*Perfglob_,'%'),fontsize=sztitle); #,fontweigth='bold');
@@ -1399,7 +1477,6 @@ if 1 :
 plt.show();
 #___________
 print("WITHANO,UISST,climato,NIJ :\n", WITHANO, UISST,climato,NIJ)
-import os
 print("whole time code %s: %f" %(os.path.basename(sys.argv[0]), time()-tpgm0));
 print("\n<end '{}'>".format(case_label))
 

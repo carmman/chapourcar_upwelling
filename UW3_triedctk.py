@@ -647,7 +647,7 @@ def showprofils(sm, figure=None, figsize=(6,10), visu=1, Data=None, bmus=None, s
         fig, grid = plt.subplots(nrows=nbl, ncols=nbc,
                                  sharex=True, sharey=True,
                                  figsize=figsize,facecolor='w')
-        fig.subplots_adjust(left=0.06, right=0.99, bottom=0.025, top=0.96,
+        fig.subplots_adjust(left=0.06, right=0.99, bottom=0.025, top=0.94,
                             hspace=0.08, wspace=0.02)
     
     inode =  0;

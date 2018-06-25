@@ -48,7 +48,9 @@ TRANSCOCLASSE = 'STD'; # Permet le transcodage des classes de façon à ce
 #
 FONDTRANS = "Obs"; # "Obs"
 #
-SAVEFIG   = False; # True; False;
+FIGSDIR   = 'figs'
+#SAVEFIG   = False;
+SAVEFIG   = True;
 fprefixe  = 'Z_'
 #
 # Prendre une zone plus petite (concerne aussi l'entrainement)
@@ -80,12 +82,14 @@ SIZE_REDUCTION = 'sel'; # selectionne une zone reduite
 # pour 'RED'. Je ne sais pas si c'est vraiment intéressant de le faire,
 # attendre que le besoin émerge.
 #True;
-OK104=OK105=OK106=False;
+#OK104=OK105=OK106=False;
+OK104=OK105=OK106=True;
 OK108=True;
 if SIZE_REDUCTION == 'RED' :
     OK107=OK109=False;
 else :
-    OK107=OK109=False; #True;
+    OK107=OK109=False;
+    #OK107=OK109=True;
 #OK104=OK105=OK106=OK107=OK108=OK109=True;
 #
 if OK108 or OK109 :

@@ -104,23 +104,25 @@ def val2val (X, valfr=0.0,valto=np.nan) :
 #----------------------------------------------------------------------
 def showimgdata(X, Labels=None, n=1, fr=0, interp=None, cmap=cm.jet, nsubl=0,
                 vmin=None, vmax=None, facecolor='w', vnorm=None, sztext=11,
-                figsize=(12,16), wspace=0.1, hspace=0.3, fignum=None) :
+                figsize=(12,16), wspace=0.1, hspace=0.3, top=0.93, bottom=0.01,
+                left=0.05, right=0.90,x=0.5,y=0.96,
+                cbpos='horizontal', fignum=None) :
     import matplotlib.colorbar as cb
     from matplotlib.colors import LogNorm
-    if nsubl > 0 :
-        nbsubl = nsubl;
-        nbsubc = np.ceil(1.0*n/nbsubl);
-    elif nsubl < 0 :
-        nbsubc = -nsubl;
-        nbsubl = np.ceil(1.0*n/nbsubc);
-    else :
-        nbsubc = np.ceil(np.sqrt(n));
-        nbsubl = np.ceil(1.0*n/nbsubc);   
-            
-    nbsubl=int(nbsubl); #nbsubl.astype(int)
-    nbsubc=int(nbsubc); #nbsubc.astype(int)
-    if nbsubl==1 and nbsubc==1 :
-        nbsubc = 2; # Je force à au moins 2 subplots sinon ca plante si y'en a qu'1
+    nbsubl, nbsubc = nsublc(n,nsubl)
+#    if nsubl > 0 :
+#        nbsubl = nsubl;
+#        nbsubc = np.ceil(1.0*n/nbsubl);
+#    elif nsubl < 0 :
+#        nbsubc = -nsubl;
+#        nbsubl = np.ceil(1.0*n/nbsubc);
+#    else :
+#        nbsubc = np.ceil(np.sqrt(n));
+#        nbsubl = np.ceil(1.0*n/nbsubc);   
+#    nbsubl=int(nbsubl); #nbsubl.astype(int)
+#    nbsubc=int(nbsubc); #nbsubc.astype(int)
+#    if nbsubl==1 and nbsubc==1 :
+#        nbsubc = 2; # Je force à au moins 2 subplots sinon ca plante si y'en a qu'1
 
     # Transformation pour l'affichage
     if vnorm=="truc01" : # avec truc01 
@@ -135,11 +137,11 @@ def showimgdata(X, Labels=None, n=1, fr=0, interp=None, cmap=cm.jet, nsubl=0,
         vmin = np.min(X);
     if vmax is None :
         vmax = np.max(X);
-    
+    print(" -- subplots({}x{}) ...".format(nbsubl,nbsubc))
     M, P, Q = np.shape(X[0]);      
     fig, axes = plt.subplots(nrows=nbsubl, ncols=nbsubc, num=fignum,
                         sharex=True, sharey=True, figsize=figsize,facecolor=facecolor)
-    fig.subplots_adjust(wspace=wspace, hspace=hspace, bottom=0.0)
+    fig.subplots_adjust(wspace=wspace, hspace=hspace, top=top, bottom=bottom, left=left, right=right)
     ifig = 0;
     for ax in axes.flat:
         if ifig < n : 
@@ -157,14 +159,19 @@ def showimgdata(X, Labels=None, n=1, fr=0, interp=None, cmap=cm.jet, nsubl=0,
                 ims = ax.imshow(img, norm=LogNorm(vmin=vmin, vmax=vmax), interpolation=interp, cmap=cmap);
             else : 
                 ims = ax.imshow(img, interpolation=interp, cmap=cmap, vmin=vmin, vmax=vmax);           
-            plt.axis("tight"); #plt.axis("off");
             if Labels is not None :
                 #ax.set_title(Labels[ifig+fr],fontsize=6);
-                ax.set_title(Labels[ifig+fr],fontsize=sztext);
+                print(n,fr,ifig,sztext,x,y)
+                ax.set_title(Labels[ifig+fr],fontsize=sztext,x=x,y=y);
             ifig += 1;
+            ax.axis("image"); #ax.axis("off");
         ax.axis('off')
-    cbar_ax,kw = cb.make_axes([ax for ax in axes.flat],orientation="horizontal",
-                             pad=0.05,aspect=30)
+    if cbpos == 'horizontal':
+        cbar_ax,kw = cb.make_axes([ax for ax in axes.flat],orientation="horizontal",
+                                 fraction=0.04,pad=0.05,aspect=40)
+    else :
+        cbar_ax,kw = cb.make_axes([ax for ax in axes.flat],orientation="vertical",
+                                 fraction=0.05,pad=0.05,aspect=30)
     fig.colorbar(ims, cax=cbar_ax, **kw);
 
 #----------------------------------------------------------------------    
