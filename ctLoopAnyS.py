@@ -438,19 +438,6 @@ if 0 : #==>> La carte
     ctk.showmap(sMapO,sztext=11,colbar=1,cmap=cm.rainbow,interp=None);
     plt.suptitle("Obs, Les Composantes de la carte", fontsize=16);
 #
-if True :
-    # Figure par clases pour plussieurs valeurs de nombre de classes
-    list_of_classes_to_show = [4,5,6,7,8,9]
-    fig = plt.figure(figsize=(12,7.5));
-    fignum = fig.number
-    plot_classes(sMapO,sst_obs,Dobs,NDobs,list_of_classes_to_show)
-    plt.tight_layout(rect=[0, 0, 1, 0.94])
-    if SAVEFIG :
-        #plt.savefig(case_figs_dir+os.sep+"%s%s%dMdlvsObstrans"%(fshortcode,method_cah,nb_class))
-        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}{}_{}_ObsShow-{:d}-{:d}-Classes".format(fignum,
-                    fprefixe,SIZE_REDUCTION,fshortcode,
-                    list_of_classes_to_show[0],list_of_classes_to_show[-1]))
-
 # Other stuffs ______________________________________
 bmusO  = ctk.mbmus (sMapO, Data=Dobs); # déjà vu ? conditionnellement ?
 minref = np.min(sMapO.codebook);
@@ -497,8 +484,24 @@ NDobs  = len(classe_Dobs)
 fond_C = np.ones(NDobs)
 fond_C = dto2d(fond_C,Lobs,Cobs,isnumobs,missval=0.5)
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-#%%
+#%% ###################################################################
+#          Visualisations apres entrainement de la carte SOM
+#======================================================================
+if True :
+    # Figure par clases de la zone geographique, pour plussieurs valeurs de nombre de classes
+    list_of_classes_to_show = [4,5,6,7,8,9]
+    fig = plt.figure(figsize=(12,7.5));
+    fignum = fig.number
+    plot_classes(sMapO,sst_obs,Dobs,NDobs,list_of_classes_to_show)
+    plt.tight_layout(rect=[0, 0, 1, 0.94])
+    if SAVEFIG :
+        #plt.savefig(case_figs_dir+os.sep+"%s%s%dMdlvsObstrans"%(fshortcode,method_cah,nb_class))
+        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}{}_{}_ObsShow-{:d}-{:d}-Classes".format(fignum,
+                    fprefixe,SIZE_REDUCTION,fshortcode,
+                    list_of_classes_to_show[0],list_of_classes_to_show[-1]))
+
 if 1 : # for Obs
+    # Figure par clases de la zone geographique, uniquement pour le nombre de classes choisie
     fig = plt.figure(figsize=(8,6));
     fignum = fig.number
     plt.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
@@ -525,16 +528,17 @@ if 1 : # for Obs
                     fprefixe,SIZE_REDUCTION,fshortcode,nb_class))
 #
 if 0 : # for obs
+    # Figure du spectre moyen par clases
     fig = plt.figure(figsize=(12,6) );
     fignum = fig.number
     TmoymensclassObs = moymensclass(sst_obs,isnumobs,classe_Dobs,nb_class)
     #plt.plot(TmoymensclassObs); plt.axis('tight');
     for i in np.arange(nb_class) :
-            plt.plot(TmoymensclassObs[:,i],'.-',color=pcmap[i]);
+        plt.plot(TmoymensclassObs[:,i],'.-',color=pcmap[i]);
     plt.axis('tight');
     plt.xlabel('mois');
     plt.legend(np.arange(nb_class)+1,loc=2,fontsize=8);
-    plt.title("Obs {} Classes, Moy. Mens. par Classe Method {} [{}]".format(nb_class,method_cah,case_label),fontsize=16);
+#    plt.title("Obs {} Classes, Moy. Mens. par Classe Method {} [{}]".format(nb_class,method_cah,case_label),fontsize=16);
     #plt.show(); sys.exit(0)
     if SAVEFIG :
         #plt.savefig(case_figs_dir+os.sep+"%s%s%dMdlvsObstrans"%(fshortcode,method_cah,nb_class))
@@ -542,6 +546,7 @@ if 0 : # for obs
                     fprefixe,SIZE_REDUCTION,fshortcode,nb_class))
 #
 if 0 :
+    # Figure du spectre moyen par referent
     #fig = plt.figure(figsize=(6,10));
     ctk.showprofils(sMapO, figsize=(6,10), Data=Dobs,visu=3, scale=2,
                     Clevel=class_ref-1,Gscale=0.5,
@@ -1053,10 +1058,14 @@ if OK109 : # Variance par pixels des moyenne des modèles cumulés
     if SAVEFIG :
         plt.savefig(case_figs_dir+os.sep+"F%d_%sVCUM_%s_%sMdl"%(fignum,fprefixe,SIZE_REDUCTION,fshortcode))
 #
-##---------------------------------------------------------------------
+#%% ---------------------------------------------------------------------
 # Redimensionnement de Tperfglob au nombre de modèles effectif
 Tperfglob = Tperfglob[0:Nmodels]; 
 #
+# -----------------------------------------------------------------------
+fig200=plt.figure(200,figsize=(2,1),facecolor='r');
+# figure bidon pour forcer un numero de figure supperieur a 200 pour les prochaines figures
+# -----------------------------------------------------------------------
 # Edition des résultats
 if 0 : # (print) Tableau des performances
     print("% de Perf global");
@@ -1066,25 +1075,30 @@ if 0 : # (print) Tableau des performances
         print(Tperfglob[i])
 #:::>
 if 1 : # Tableau des performances en figure de courbes
-    fig = plt.figure(facecolor='w'); plt.plot(Tperfglob,'.-');
+    fig = plt.figure(figsize=(12,6),facecolor='w'); plt.plot(Tperfglob,'.-');
+    plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.15, left=0.05, right=0.98)
     fignum = fig.number
     plt.axis("tight"); plt.grid('on')
     plt.xticks(np.arange(Nmodels),Tmdlname, fontsize=8, rotation=45,
                horizontalalignment='right', verticalalignment='baseline');
+    #          horizontalalignment='right', verticalalignment='center');
     plt.legend(TypePerf,numpoints=1,loc=3)
-    plt.title("%sSST(%s)) %s%d Indice(s) de classification of Completed Models (vs Obs)"\
-                 %(fcodage,DATAMDL,method_cah,nb_class));
+    plt.title("%sSST(%s)) %s%d Indice(s) de classification of Completed Models (vs Obs)\n[%s]"\
+                 %(fcodage,DATAMDL,method_cah,nb_class,case_label));
+    if SAVEFIG :
+        plt.savefig(case_figs_dir+os.sep+"F%d_%s_%s_%sIndexClassCompMod"%(fignum,fprefixe,SIZE_REDUCTION,fshortcode))
 #<:::
 #
 #
+#%%%>==================================================================
 # Mettre les Tableaux-Liste en tableau Numpy
+#----------------------------------------------------------------------
 Tmdlname = np.array(Tmdlname);
 TTperf   = np.array(TTperf);
 if NIJ==1 :
     TNIJ = np.array(TNIJ);
 TDmdl4CT = np.array(TDmdl4CT);
-#%%%>==================================================================
-#%%%>------------------------------------------------------------------
+#
 if NIJ > 0 : # A.F.C
     #Ajout de l'indice dans le nom du modèle
     Tm_ = np.empty(len(Tmdlname),dtype='<U32');
@@ -1145,15 +1159,25 @@ if NIJ > 0 : # A.F.C
         if AFCWITHOBS :
             # (Mais ne pas prendre les obs dans la CAH (ne prendre que les modèles))
             Z_ = linkage(F1U[0:Nmdlok,coord2take], metho_, dist_);
+            Z_ = linkage(F1U, metho_, dist_);
         else :
             Z_ = linkage(F1U[:,coord2take], metho_, dist_);
         if 1 : # dendrogramme
-            fig = plt.figure(figsize=(17,11));
+            fig = plt.figure(figsize=(18,11),facecolor='w');
+            plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.15, left=0.05, right=0.98)
             fignum = fig.number
-            R_ = dendrogram(Z_,Nmdlok,'lastp');
-            L_ = np.array(lignames)
-            plt.xticks((np.arange(len(Tmdlname))*10)+7,L_[R_['leaves']], fontsize=11,
-                   rotation=45,horizontalalignment='right', verticalalignment='baseline')
+            fignum = fig.number
+            if 0:
+                R_ = dendrogram(Z_,Nmdlok,'lastp',orientation='top');
+                L_ = np.array(lignames)
+                plt.xticks((np.arange(len(Tmdlname))*10)+7,L_[R_['leaves']], fontsize=11,
+                       rotation=45,horizontalalignment='right', verticalalignment='baseline')
+            else:
+                R_ = dendrogram(Z_,Nmdlok,'lastp',orientation='left');
+                L_ = np.array(lignames)
+                plt.yticks((np.arange(len(Tmdlname))*10)+7,L_[R_['leaves']], fontsize=11,
+                       rotation=45,horizontalalignment='right', verticalalignment='baseline')
+
             del R_, L_
             plt.title("AFC: Coord(%s) dendrogram [%s]\nMétho=%s, dist=%s, nb_clust=%d"
                       %((coord2take+1).astype(str),case_label,metho_,dist_,nb_clust), fontsize=18)
