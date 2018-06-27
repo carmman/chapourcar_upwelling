@@ -19,16 +19,16 @@ DATAMDL = "raverage_1975_2005";
 if DATAMDL=="rcp_2006_2017" :      # on précise le scénario
     scenar = "rcp85";              # rcp26 rcp45 rcp85
 #
-# Tableau des modèles (cf dans ctObsMdldef.py)
-Tmodels = Tmodels_anyall;
-#Tmodels= Tmodels[0:5]; # Pour limiter le nombre de modèles en phase de mise au point
-Nmodels = len(Tmodels); # print(Nmodels); sys.exit(0)
+## Tableau des modèles (cf dans ctObsMdldef.py)
+#Tmodels = Tmodels_anyall;
+##Tmodels= Tmodels[0:5]; # Pour limiter le nombre de modèles en phase de mise au point
+#Nmodels = len(Tmodels); # print(Nmodels); sys.exit(0)
 #______________________________
 # For the Carte Topo (see also ctObsMdl)
 #nbl      = 6;  nbc =  6;  # Taille de la carte
 #nbl      = 30;  nbc =  4;  # Taille de la carte
 nbl      = 36;  nbc =  6;  # Taille de la carte
-nbl      = 52;  nbc =  8;  # Taille de la carte
+#nbl      = 52;  nbc =  8;  # Taille de la carte
 #Parm_app = ( 5, 5., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
 Parm_app = ( 50, 5., 1.,  100, 1., 0.1); # Température ini, fin, nb_it
 #Parm_app = ( 500, 5., 1.,  1000, 1., 0.1); # Température ini, fin, nb_it
