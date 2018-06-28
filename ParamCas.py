@@ -25,16 +25,84 @@ if DATAMDL=="rcp_2006_2017" :      # on précise le scénario
 #Nmodels = len(Tmodels); # print(Nmodels); sys.exit(0)
 #______________________________
 # For the Carte Topo (see also ctObsMdl)
-#nbl      = 6;  nbc =  6;  # Taille de la carte
-#nbl      = 30;  nbc =  4;  # Taille de la carte
-nbl      = 36;  nbc =  6;  # Taille de la carte
-#nbl      = 52;  nbc =  8;  # Taille de la carte
-#Parm_app = ( 5, 5., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
-Parm_app = ( 50, 5., 1.,  100, 1., 0.1); # Température ini, fin, nb_it
-#Parm_app = ( 500, 5., 1.,  1000, 1., 0.1); # Température ini, fin, nb_it
-#Parm_app = ( 2000, 5., 1.,  5000, 1., 0.1); # Température ini, fin, nb_it
+#
+#
+# -----------------------------------------------------------------------------
+# Conditions d'execution:
+#    | --------------- CARACTERISTIQUES ----------------- | -- VARIABLES ---- |
+#  - Architecture de la carte SOM ......................... nbl, nbc
+#  - Parametres d'entrainement en deux phases ............. Parm_app
+#  - Zone geographique consideree (toute, reduite, ...) ... SIZE_REDUCTION
+#  - Nombre de classes .................................... nb_class
+#  - Nombre de clusters et de coordonnees pour l'AFC ...... nb_clust, NBCOORDAFC4CAH
+#  - Critere pour evaluation des performances pour l'AFC .. NIJ
+# -----------------------------------------------------------------------------
+# Prendre une zone plus petite (concerne aussi l'entrainement)
+    # 'All' : Pas de réduction d'aucune sorte
+    # 'sel' : On sélectionne, d'entrée de jeu une zone plus petite,
+    #         c'est à dire à la lecture des données. Zone sur laquelle
+    #         tous les traitement seront effectues (codification, CT, Classif ...)
+    #         ('sel' à la place de 'mini' dans les version précédantes);
+    # 'RED' : Seule la classification est faite sur la zone REDuite
+    # rem   : PLM 'sel' et 'RED' ne sont pas compatibles; voir ci-après pour
+    #         la définition de la zone qui sera concernée
+    # AFC
+# -----------------------------------------------------------------------------
+# NIJ = 0 : Pas d'AFC
+#     = 1 : nombre d'elt par classe
+#     = 2 : perf par classe
+#     = 3 : nombre d'elt bien classés par classe
+#           (le seul qui devrait survivre à mon sens)
+if 0 : # conditions Charles: GRANDE ZONE
+    # A - Grande zone de l’upwelling (25x36) : Longitude : -44 à -9.5 ; Latitude : 29.5 à 5.5
+    #   * Carte topologique et CAH : 30x4 (5, 5, 1, - 16, 1, 0.1) : TE=0.6824 ; QE=0.153757
+    #   Nb_classe = 7
+    nbl      = 30;  nbc =  4;  # Taille de la carte
+    Parm_app = ( 5, 5., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
+    SIZE_REDUCTION = 'All';
+    nb_class   = 7; #6, 7, 8  # Nombre de classes retenu
+    # et CAH for cluster with AFC
+    NIJ = 2; 
+    nb_clust       = 4; # Nombre de cluster
+    NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
+                    # utiliser pour faire la CAH (limité à nb_class-1).
+elif 1 : # conditions Charles: PETITE ZONE
+    # B - Sous-zone ciblant l’upwelling (13x12) :    LON: 16W à 28W LAT : 10N à 23N
+    #   * Carte topologique et CAH : 17x6 (4, 4, 1, - 16, 1, 0.1) : TE=0.6067 ; QE=0.082044
+    #   Nb_classe = 4
+    nbl      = 17;  nbc =  6;  # Taille de la carte
+    Parm_app = ( 4, 4., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
+    SIZE_REDUCTION = 'sel';
+    nb_class   = 4; #6, 7, 8  # Nombre de classes retenu
+    # et CAH for cluster with AFC
+    NIJ = 2; 
+    nb_clust       = 5; # Nombre de cluster
+    NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
+else :
+    #nbl      = 6;  nbc =  6;  # Taille de la carte
+    #nbl      = 30;  nbc =  4;  # Taille de la carte
+    nbl      = 36;  nbc =  6;  # Taille de la carte
+    #nbl      = 52;  nbc =  8;  # Taille de la carte
+    # -------------------------------------------------------------------------
+    #Parm_app = ( 5, 5., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
+    Parm_app = ( 50, 5., 1.,  100, 1., 0.1); # Température ini, fin, nb_it
+    #Parm_app = ( 500, 5., 1.,  1000, 1., 0.1); # Température ini, fin, nb_it
+    #Parm_app = ( 2000, 5., 1.,  5000, 1., 0.1); # Température ini, fin, nb_it
+    # -------------------------------------------------------------------------
+    #SIZE_REDUCTION = 'All';
+    SIZE_REDUCTION = 'sel'; # selectionne une zone reduite  
+    #SIZE_REDUCTION = 'RED'; # Ne pas utiliser
+    # -------------------------------------------------------------------------
+    nb_class   = 7; #6, 7, 8  # Nombre de classes retenu
+    # -------------------------------------------------------------------------
+    NIJ        = 2; # cas de
+    # -------------------------------------------------------------------------
+    nb_clust   = 7; # Nombre de cluster
+    NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
+# -----------------------------------------------------------------------------
+#
 epoch1,radini1,radfin1,epoch2,radini2,radfin2 = Parm_app
-case_label_base = "Map-{}x{}_Ep1-{}_Ep2-{}".format(nbl, nbc, epoch1, epoch2)
+case_label_base = "M{}x{}_Ep1-{}_Ep2-{}".format(nbl, nbc, epoch1, epoch2)
 #______________________________
 # Complémentation des nan pour les modèles
 MDLCOMPLETION = True; # True=>Cas1
@@ -51,20 +119,13 @@ FONDTRANS = "Obs"; # "Obs"
 FIGSDIR   = 'figs'
 #SAVEFIG   = False;
 SAVEFIG   = True;
-fprefixe  = 'Z_'
 #
-# Prendre une zone plus petite (concerne aussi l'entrainement)
-#SIZE_REDUCTION = 'All';
-SIZE_REDUCTION = 'sel'; # selectionne une zone reduite  
-#SIZE_REDUCTION = 'RED'; # Ne pas utiliser
-    # 'All' : Pas de réduction d'aucune sorte
-    # 'sel' : On sélectionne, d'entrée de jeu une zone plus petite,
-    #         c'est à dire à la lecture des données. Zone sur laquelle
-    #         tous les traitement seront effectues (codification, CT, Classif ...)
-    #         ('sel' à la place de 'mini' dans les version précédantes);
-    # 'RED' : Seule la classification est faite sur la zone REDuite
-    # rem   : PLM 'sel' et 'RED' ne sont pas compatibles; voir ci-après pour
-    #         la définition de la zone qui sera concernée
+if SIZE_REDUCTION == 'All' :
+    fprefixe  = 'Z_'
+elif SIZE_REDUCTION == 'sel' :
+    fprefixe  = 'Zsel_'
+elif SIZE_REDUCTION == 'RED' :
+    fprefixe  = 'ZR_'
 #______________________________
 # Choix des figures à produire
 # fig Pour chaque modèle et par pixel :
@@ -140,27 +201,17 @@ if CENTRED :
 # for CAH for classif with CT (see ctObsMdl for more)
 method_cah = 'ward';      # 'average', 'ward', 'complete','weighted'
 dist_cah   = 'euclidean'; #
-nb_class   = 7; #6, 7, 8  # Nombre de classes retenu
+#nb_class   = 7; #6, 7, 8  # Nombre de classes retenu
 ccmap      = cm.jet;      # Accent, Set1, Set1_r, gist_ncar; jet, ... : map de couleur pour les classes
 # pour avoir des couleurs à peu près equivalente pour les plots
 #pcmap     = ccmap(np.arange(1,256,round(256/nb_class)));ko 512ko, 384ko
 pcmap      = ccmap(np.arange(0,320,round(320/nb_class))); #ok?
 #
 #______________________________
-# AFC
-NIJ = 3; # 0 : Pas d'AFC
-         # 1 : nombre d'elt par classe
-         # 2 : perf par classe
-         # 3 : nombre d'elt bien classés par classe
-         #     (le seul qui devrait survivre à mon sens)
 AFCWITHOBS = True; #False True : afc avec ou sans les Obs ? dans le tableau de contingence 
 pa=1; po=2; # Choix du plan factoriel (axes)
 #pa=3; po=4; # Choix du plan factoriel
 #
-# et CAH for cluster with AFC
-nb_clust       = 7; # Nombre de cluster
-NBCOORDAFC4CAH = 6; # n premières coordonnées de l'afc à
-                    # utiliser pour faire la CAH (limité à nb_class-1).
 #
 #Flag visu classif des modèles des cluster
 AFC_Visu_Classif_Mdl_Clust  = []; # liste des cluster a afficher (à partir de 1)
@@ -169,5 +220,5 @@ AFC_Visu_Classif_Mdl_Clust  = []; # liste des cluster a afficher (à partir de 1
 AFC_Visu_Clust_Mdl_Moy_4CT  = []; # liste des cluster a afficher (à partir de 1)
 #AFC_Visu_Clust_Mdl_Moy_4CT = [1,2,3,4,5,6,7];
 #######################################################################
-case_label="Case_"+SIZE_REDUCTION+"_"+case_label_base
+case_label="Case_{}{}_NIJ{:d}".format(fprefixe,case_label_base,NIJ)
 #######################################################################
