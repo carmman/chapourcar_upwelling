@@ -303,12 +303,18 @@ def plot_classes(sMapO,sst_obs,Dobs,NDobs,listofclasses):
         fond_C = dto2d(fond_C,Lobs,Cobs,isnumobs,missval=0.5)
         #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         #plt.figure(figsize=(8,6) );
-        plt.subplot(nclassesl,nclassesc,iclass+1)
+        ax = plt.subplot(nclassesl,nclassesc,iclass+1)
         #
-        plt.imshow(XC_Ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class_tmp);
-        hcb    = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
+        im = ax.imshow(XC_Ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class_tmp);
+        ax_divider = make_axes_locatable(ax)
+        cax = ax_divider.append_axes("right", size="4%", pad="1%")
+        hcb = plt.colorbar(im,cax=cax,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
         hcb.set_ticklabels(coches);
-        hcb.ax.tick_params(labelsize=8)
+        hcb.ax.tick_params(labelsize=8);
+        plt.sca(ax)
+        #        hcb    = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
+        #        hcb.set_ticklabels(coches);
+        #        hcb.ax.tick_params(labelsize=8)
         plt.title("{} classes".format(nb_class_tmp),fontsize=14)
         if SIZE_REDUCTION == 'All' :
             lolast = 4
@@ -343,7 +349,7 @@ from ParamCas import *
 varnames = np.array(["JAN","FEV","MAR","AVR","MAI","JUI",
                     "JUI","AOU","SEP","OCT","NOV","DEC"]);
 
-print("Initial case label: {}\n".format(case_label))
+print("Initial case label: {}\n".format(case_label_base))
 
 # print(os.path.exists("/home/el/myfile.txt"))
 
@@ -359,20 +365,24 @@ if DATAOBS == "raverage_1975_2005" :
         #sst_obs = np.load("Datas/sst_obs_1854a2005_25L36C.npy")
         #lat: 29.5 à 5.5 ; lon: -44.5 à -9.5
         sst_obs  = np.load("Datas/sst_obs_1854a2005_Y60X315.npy");
-        data_label_base = "v3bO-1975-2005"
+        data_label_base = "ERSSTv3bO-1975-2005"
+        lat      = np.arange(29.5, 4.5, -1);
+        lon      = np.arange(-44.5, -8.5, 1);
     else :
         import netCDF4
         # -------------------------------------------------------------------------
         if 1 :
             nc        = netCDF4.Dataset("./Datas/raverage_1975-2005/ersstv3b_1975-2005_extract_LON-315-351_LAT-30-5.nc");
-            data_label_base = "v3b-1975-2005"
+            data_label_base = "ERSSTv3b-1975-2005"
         else :
             nc        = netCDF4.Dataset("./Datas/raverage_1975-2005/ersstv5_1975-2005_extract_LON-315-351_LAT-30-5.nc");
-            data_label_base = "v5-1975-2005"
+            data_label_base = "ERSSTv5-1975-2005"
         # -------------------------------------------------------------------------
         liste_var = nc.variables;       # mois par mois de janvier 1930 à decembre 1960 I guess
         sst_var   = liste_var['sst']    # 1960 - 1930 + 1 = 31 ; 31 * 12 = 372
         sst_obs   = sst_var[:];         # np.shape = (372, 1, 25, 36)
+        lat       = liste_var['lat'][:]
+        lon       = liste_var['lon'][:]
         Nobs,Ncan,Lobs,Cobs = np.shape(sst_obs);
         if 0 : # visu obs
             showimgdata(sst_obs,fr=0,n=Nobs);
@@ -384,10 +394,12 @@ if DATAOBS == "raverage_1975_2005" :
 elif DATAOBS == "raverage_1930_1960" :
     import netCDF4
     nc      = netCDF4.Dataset("./Datas/raverage_1930-1960/ersstv3b_1930-1960_extract_LON-315-351_LAT-30-5.nc");
-    data_label_base = "v3b-1930_1960"
+    data_label_base = "ERSSTv3b-1930_1960"
     liste_var = nc.variables;       # mois par mois de janvier 1930 à decembre 1960 I guess
     sst_var   = liste_var['sst']    # 1960 - 1930 + 1 = 31 ; 31 * 12 = 372
     sst_obs   = sst_var[:];         # np.shape = (372, 1, 25, 36)
+    lat       = liste_var['lat'][:]
+    lon       = liste_var['lon'][:]
     Nobs,Ncan,Lobs,Cobs = np.shape(sst_obs);
     if 0 : # visu obs
         showimgdata(sst_obs,fr=0,n=Nobs);
@@ -399,10 +411,12 @@ elif DATAOBS == "raverage_1930_1960" :
 elif DATAOBS == "rcp_2006_2017" :
     import netCDF4
     nc      = netCDF4.Dataset("./Datas/rcp_2006-2017/ersst.v3b._2006-2017_extrac-zone_LON-315-351_LAT-30-5.nc");
-    data_label_base = "v3b-2006_2017"
+    data_label_base = "ERSSTv3b-2006_2017"
     liste_var = nc.variables;       # mois par mois de janvier 2006 à decembre 2017 I guess
     sst_var   = liste_var['sst']    # 2017 - 2006 + 1 = 12 ; 12 * 12 = 144
     sst_obs   = sst_var[:];         # np.shape = (144, 1, 25, 36)
+    lat       = liste_var['lat'][:]
+    lon       = liste_var['lon'][:]
     Nobs,Ncan,Lobs,Cobs = np.shape(sst_obs);
     if 0 : # visu obs
         showimgdata(sst_obs,fr=0,n=Nobs);
@@ -411,18 +425,30 @@ elif DATAOBS == "rcp_2006_2017" :
     sst_obs   = sst_obs.reshape(Nobs,Lobs,Cobs); # np.shape = (144, 25, 36)
     sst_obs   = sst_obs.filled(np.nan); 
 #
-case_label = case_label+"_"+data_label_base
+if lon[0] > 180 : # ATTENTION, on considere tous > 180 ... ou pas
+    lon -= 360
+#
+case_label = case_label_base+"_"+data_label_base
 print("case label with data version: {}\n".format(case_label))
 
+# Repertoire principal des maps (les objets des SOM) et sous-repertoire por le cas en cours 
+if SAVEMAP :
+    if not os.path.exists(MAPSDIR) :
+        os.makedirs(MAPSDIR)
+    case_maps_dir = os.path.join(MAPSDIR,case_label)
+    if not os.path.exists(case_maps_dir) :
+        os.makedirs(case_maps_dir)
+# Repertoire prancipal des figures et sous-repertoire por le cas en cours 
 if SAVEFIG :
     if not os.path.exists(FIGSDIR) :
         os.makedirs(FIGSDIR)
     case_figs_dir = os.path.join(FIGSDIR,case_label)
     if not os.path.exists(case_figs_dir) :
         os.makedirs(case_figs_dir)
-
-lat      = np.arange(29.5, 4.5, -1);
-lon      = np.arange(-44.5, -8.5, 1);
+# -----------------------------------------------------------------------------
+#
+#lat      = np.arange(29.5, 4.5, -1);
+#lon      = np.arange(-44.5, -8.5, 1);
 Nobs,Lobs,Cobs = np.shape(sst_obs); print("obs.shape : ", Nobs,Lobs,Cobs);
 #
 # Selection___________________________________________
@@ -477,30 +503,50 @@ if WITHANO :
 else : # On suppose qu'il s'agit du brute ...
     wvmin =16.0; wvmax =30.0; # ok pour obs 1975-2005 : SST 4CT: min=16.8666; max=29.029
 #    
-if 0 : # Visu (et sauvegarde éventuelle de la figure) des données telles
+if 1 : # Visu (et sauvegarde éventuelle de la figure) des données telles
        # qu'elles vont etre utilisées par la Carte Topologique
     minDobs = np.min(Dobs);   maxDobs=np.max(Dobs);
     moyDobs = np.mean(Dobs);  stdDobs=np.std(Dobs);
+    # --------------------------------------------
+    if SIZE_REDUCTION == 'All' :
+        figsize = (10.5,5.5)
+    elif SIZE_REDUCTION == 'sel' :
+        figsize=(10,8)
+    fig = plt.figure(figsize=figsize,facecolor='w')
+    fignum = fig.number # numero de figure en cours ...
+    wspace=0.02; hspace=0.02; top=0.92; bottom=0.02; left=0.02; right=0.98;
+    #plt.subplots_adjust(wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right)
     if climato != "GRAD" :
-        aff2D(Dobs,Lobs,Cobs,isnumobs,isnanobs,wvmin=wvmin,wvmax=wvmax,figsize=(12,9)); #...
+        aff2D(Dobs,Lobs,Cobs,isnumobs,isnanobs,wvmin=wvmin,wvmax=wvmax,fignum=fignum,
+              wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right,
+              noaxes=False,noticks=False,nolabels=True); #...
     else :
-        aff2D(Dobs,Lobs,Cobs,isnumobs,isnanobs,wvmin=0.0,wvmax=0.042,figsize=(12,9)); #...
-    plt.suptitle("%sSST%d-%d). Obs for CT\nmin=%f, max=%f, moy=%f, std=%f"
-                 %(fcodage,andeb,anfin,minDobs,maxDobs,moyDobs,stdDobs));
-    if 0 : #SAVEFIG : # sauvegarde de la figure
-        fig = plt.gcf() # figure en cours ...
-        fignum = fig.number # numero de figure en cours ...
-        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}Obs4CT".format(fignum,fshortcode))
+        aff2D(Dobs,Lobs,Cobs,isnumobs,isnanobs,wvmin=0.0,wvmax=0.042,fignum=fignum,
+              wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right); #...
+    plt.suptitle("%sSST Climatologie %d-%d). Obs for CT [%s]\nmin=%f, max=%f, moy=%f, std=%f"
+                 %(fcodage,andeb,anfin,data_label_base,minDobs,maxDobs,moyDobs,stdDobs));
+    if SAVEFIG : # sauvegarde de la figure
+        figfile = "F{:d}_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(fignum,fprefixe,fshortcode,andeb,anfin,data_label_base)
+        plt.savefig(case_figs_dir+os.sep+figfile)
+        #plt.savefig(case_figs_dir+os.sep+"F{:d}_{}Obs4CT".format(fignum,fshortcode))
     #X_ = np.mean(Dobs, axis=1); X_ = X_.reshape(743,1); #rem = 0.0 when anomalies
-    plt.show(); sys.exit(0)
-#%%
-#######################################################################
+    #plt.show(); sys.exit(0)
+    #
+    if 0:
+        XD,L,C,isnum = Dobs,Lobs,Cobs
+        ND,p      = np.shape(XD);
+        X_        = np.empty((L*C,p));   
+        X_[isnumobs] = XD   
+        X_[isnanobs] = np.nan
+        showimgdata(X_.T.reshape(p,1,L,C))
+
+#%% ######################################################################
 #
 #
 #
-#######################################################################
+##########################################################################
 #                       Carte Topologique
-#======================================================================
+#=========================================================================
 tseed = 0;
 #tseed = 9;
 #tseed = np.long(time());
@@ -524,7 +570,7 @@ bmus2O = ctk.mbmus (sMapO, Data=None, narg=2);
 etO    = ctk.errtopo(sMapO, bmus2O); # dans le cas 'rect' uniquement
 #print("Obs, erreur topologique = %.4f" %etO)
 print("Obs,\n  case: {}\n  tseed={} ... qerr={:8.6f} ... terr={:.4f}".format(case_label,tseed,qerr,etO))
-#
+#%%
 # Visualisation______________________________________
 if 0 : #==>> la U_matrix
     a=sMapO.view_U_matrix(distance2=2, row_normalized='No', show_data='Yes', \
@@ -540,6 +586,79 @@ minref = np.min(sMapO.codebook);
 maxref = np.max(sMapO.codebook);
 Z_          = linkage(sMapO.codebook, method_cah, dist_cah);
 class_ref   = fcluster(Z_,nb_class,'maxclust'); # Classes des referents
+# dendrograme of codebooks
+if 1 :
+    max_d = np.sum(Z_[[-nb_class+1,-nb_class],2])/2
+    color_threshold = max_d
+    fig = plt.figure(figsize=(18,11),facecolor='w');
+    fignum = fig.number # numero de figure en cours ...
+    #fig = plt.figure()
+    Ncell=np.int(np.prod(sMapO.mapsize))
+    #if SIZE_REDUCTION == 'All' :
+    #    color_threshold = 5
+    #elif SIZE_REDUCTION == 'sel' :
+    #    color_threshold = 6
+    if SAVEFIG :
+        figfile = "F{:d}_{:s}{:s}_".format(fignum,fprefixe,fshortcode)
+    if 1:
+        # top-down dendogram ---------------
+        plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.08, left=0.04, right=0.99)
+        # ----------------------------------
+        R_ = dendrogram(Z_,p=Ncell,truncate_mode=None,color_threshold=color_threshold,
+                        orientation='top',leaf_font_size=10) #,labels=lignames
+        #               leaf_rotation=45);
+        plt.axhline(y=max_d, c='k')
+        #L_ = np.array(lignames)
+        #plt.xticks((np.arange(len(TmdlnameArr)+1)*10)+7,L_[R_['leaves']], fontsize=8,
+        #       rotation=45,horizontalalignment='right', verticalalignment='baseline')
+        #xtickslocs, xtickslabels = plt.xticks()
+        #plt.xticks(xtickslocs, xtickslabels)
+        plt.tick_params(axis='x',reset=True)
+        plt.tick_params(axis='x',which='major',direction='out',length=3,pad=1,top=False,   #otation_mode='anchor',
+                        labelrotation=-80)
+        plt.grid(axis='y')
+        plt.xlabel('numero de codebook', labelpad=15, fontsize=14)
+        plt.ylabel("distance ({})".format(method_cah), fontsize=14)
+        lax=plt.axis(); daxy=(lax[3]-lax[2])/400
+        plt.axis([lax[0],lax[1],lax[2]-daxy,lax[3]])
+        if SAVEFIG :
+            figfile += "Top-CAH-dendrogram"
+    else:
+        # left-to-right dendogram ---------------
+        plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.05, left=0.09, right=0.99)
+        # ----------------------------------
+        R_ = dendrogram(Z_,p=Ncell,truncate_mode=None,color_threshold=color_threshold,
+                        orientation='right',leaf_font_size=8); #,labels=lignames
+        plt.axvline(x=max_d, c='k')
+        #R_ = dendrogram(Z_,p=Ncell,truncate_mode='lastp',orientation='left',labels=lignames);
+        #L_ = np.array(lignames)
+        #plt.yticks((np.arange(len(TmdlnameArr)+1)*10)+7,L_[R_['leaves']], fontsize=8,
+        #           verticalalignment='top')
+        plt.tick_params(axis='y',reset=True)
+        plt.tick_params(axis='y',which='major',direction='out',length=4,pad=2,left=True,right=False,
+                        labelleft=True,labelright=False,labelsize=8)
+        plt.grid(axis='x')
+        # label des y mais a droite ! -------------
+        #plt.text(1.03, 0.5, "numero de codebook", {'color': 'k', 'fontsize': 14},
+        #         horizontalalignment='left',
+        #         verticalalignment='center',
+        #         rotation=90,
+        #         clip_on=False,
+        #         transform=plt.gca().transAxes)
+        # -----------------------------------------
+        plt.ylabel('numero de codebook',rotation=-90, labelpad=25, fontsize=14)
+        plt.xlabel("distance ({})".format(method_cah), fontsize=14)
+        # decale tres legerement les axes pour
+        lax=plt.axis(); daxx=(lax[0]-lax[1])/1200
+        plt.axis([lax[0],lax[1]-daxx,lax[2],lax[3]])
+        if SAVEFIG :
+            figfile += "Left-CAH-dendrogram"
+    del R_ # L_
+    plt.title("CAH: SAM codebook dendrogram [%s]\nMétho=%s, dist=%s, nb_class=%d"
+              %(case_label,method_cah, dist_cah,nb_class), fontsize=18)
+    if SAVEFIG :
+        plt.savefig(case_figs_dir+os.sep+figfile)
+
 del Z_
 #
 coches = np.arange(nb_class)+1;   # ex 6 classes : [1,2,3,4,5,6]
@@ -600,10 +719,17 @@ if 1 : # for Obs
     # Figure par clases de la zone geographique, uniquement pour le nombre de classes choisie
     fig = plt.figure(figsize=(8,6));
     fignum = fig.number
-    plt.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
-    hcb    = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
+    ax = plt.subplot(111)
+    im = ax.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
+    ax_divider = make_axes_locatable(ax)
+    cax = ax_divider.append_axes("right", size="4%", pad="1%")
+    hcb = plt.colorbar(im,cax=cax,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
     hcb.set_ticklabels(coches);
-    hcb.ax.tick_params(labelsize=8)
+    hcb.ax.tick_params(labelsize=8);
+    plt.sca(ax)
+    #hcb    = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
+    #hcb.set_ticklabels(coches);
+    #hcb.ax.tick_params(labelsize=8)
     plt.title("Obs {:d} Classes, classe géog., Method {}\n[{}]".format(nb_class,
         method_cah,case_label),fontsize=16); #,fontweigth='bold');
     if SIZE_REDUCTION == 'All' :
@@ -1189,10 +1315,10 @@ if 1 : # Tableau des performances en figure de courbes
     #          horizontalalignment='right', verticalalignment='center');
     plt.legend((TypePerf[0],"Cum"+TypePerf[0]),numpoints=1,loc=3)
     plt.ylabel('performance by Model [%]')
-    plt.title("%sSST(%s)) %s%d Indice(s) de classification of Completed Models (vs Obs)\n[%s]"\
-                 %(fcodage,DATAMDL,method_cah,nb_class,case_label));
+    plt.title("%sSST(%s)) - Accuracy Precision by Model and Cumulating Models\n[%s]"\
+                 %(fcodage,DATAMDL,case_label));
     if SAVEFIG :
-        plt.savefig(case_figs_dir+os.sep+"F%d_%s_%s_%sIndexClassCompMod"%(fignum,fprefixe,SIZE_REDUCTION,fshortcode))
+        plt.savefig(case_figs_dir+os.sep+"F%d_%s_%s_%sAccuPresByModAndCum"%(fignum,fprefixe,SIZE_REDUCTION,fshortcode))
 #<:::
 #
 #
@@ -1287,21 +1413,25 @@ if NIJ > 0 :
                 Z_ = linkage(D_, metho_, dist_);
         else :
             Z_ = linkage(F1U[:,coord2take], metho_, dist_);
+        max_d = np.sum(Z_[[-nb_clust+1,-nb_clust],2])/2
+        color_threshold = max_d
         # --------------------------------------------------------------------
         fig = plt.figure(figsize=(18,11),facecolor='w');
         #fig = plt.figure()
         fignum = fig.number
         if SAVEFIG :
             figfile = "F{:d}_{:s}{:s}_{:s}_{:d}cl_".format(fignum,fprefixe,SIZE_REDUCTION,fshortcode,nb_class)
-        if 0:
+        if 1:
             # top-down dendogram ---------------
-            plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.17, left=0.03, right=0.99)
+            plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.17, left=0.04, right=0.99)
             # ----------------------------------
-            Rlp_ = dendrogram(Z_,p=Nmdlok,truncate_mode='lastp',labels=lignames,orientation='top',get_leaves=True,no_plot=True);
+            Rlp_ = dendrogram(Z_,p=Nmdlok,truncate_mode='lastp',labels=lignames,
+                              orientation='top',get_leaves=True,no_plot=True);
             #R_ = dendrogram(Z_,p=Nmdlok,truncate_mode=None,orientation='top');
-            R_ = dendrogram(Z_,p=Nmdlok,truncate_mode=None,color_threshold=1.5,orientation='top',
-                            labels=lignames,leaf_font_size=10)
+            R_ = dendrogram(Z_,p=Nmdlok,truncate_mode=None,color_threshold=color_threshold,
+                            orientation='top',labels=lignames,leaf_font_size=10)
             #               leaf_rotation=45);
+            plt.axhline(y=max_d, c='k')
             #L_ = np.array(lignames)
             #plt.xticks((np.arange(len(TmdlnameArr)+1)*10)+7,L_[R_['leaves']], fontsize=8,
             #       rotation=45,horizontalalignment='right', verticalalignment='baseline')
@@ -1311,22 +1441,29 @@ if NIJ > 0 :
             plt.tick_params(axis='x',which='major',direction='out',length=3,pad=1,top=False,   #otation_mode='anchor',
                             labelrotation=-80)
             plt.grid(axis='y')
+            plt.xlabel('nom du modele', labelpad=0, fontsize=14)
+            plt.ylabel("distance ({})".format(method_cah), fontsize=14)
             lax=plt.axis(); daxy=(lax[3]-lax[2])/400
             plt.axis([lax[0],lax[1],lax[2]-daxy,lax[3]])
             if SAVEFIG :
                 figfile += "Top-AFC-dendrogram"
         else:
             # left-to-right dendogram ---------------
-            plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.05, left=0.01, right=0.89)
+            plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.05, left=0.09, right=0.99)
             # ----------------------------------
-            R_ = dendrogram(Z_,p=Nmdlok,truncate_mode=None,color_threshold=1.5,orientation='left',labels=lignames,leaf_font_size=10);
+            R_ = dendrogram(Z_,p=Nmdlok,truncate_mode=None,color_threshold=color_threshold,
+                            orientation='right',labels=lignames,leaf_font_size=10);
+            plt.axvline(x=max_d, c='k')
             #R_ = dendrogram(Z_,p=Nmdlok,truncate_mode='lastp',orientation='left',labels=lignames);
             #L_ = np.array(lignames)
             #plt.yticks((np.arange(len(TmdlnameArr)+1)*10)+7,L_[R_['leaves']], fontsize=8,
             #           verticalalignment='top')
             plt.tick_params(axis='y',reset=True)
-            plt.tick_params(axis='y',which='major',direction='out',length=4,pad=2,left=False,labelleft=False,labelright=True)
+            plt.tick_params(axis='y',which='major',direction='out',length=4,pad=2,left=True,right=False,
+                            labelleft=True,labelright=False,labelsize=8)
             plt.grid(axis='x')
+            plt.ylabel('nom du modele',rotation=-90, labelpad=10, fontsize=14)
+            plt.xlabel("distance ({})".format(method_cah), fontsize=14)
             # decale tres legerement les axes pour
             lax=plt.axis(); daxx=(lax[0]-lax[1])/1200
             plt.axis([lax[0],lax[1]-daxx,lax[2],lax[3]])

@@ -114,11 +114,18 @@ TRANSCOCLASSE = 'STD'; # Permet le transcodage des classes de façon à ce
     # est appliqué sur les référents ...
     # Avec la valeur '' le transcodage n'est pas requis.
 #
+# -----------------------------------------------------------------------------
 FONDTRANS = "Obs"; # "Obs"
 #
+# -----------------------------------------------------------------------------
 FIGSDIR   = 'figs'
 #SAVEFIG   = False;
 SAVEFIG   = True;
+# -----------------------------------------------------------------------------
+MAPSDIR   = 'maps'
+#SAVEMAP   = False;
+SAVEMAP   = True;
+# -----------------------------------------------------------------------------
 #
 if SIZE_REDUCTION == 'All' :
     fprefixe  = 'Z_'
@@ -220,5 +227,5 @@ AFC_Visu_Classif_Mdl_Clust  = []; # liste des cluster a afficher (à partir de 1
 AFC_Visu_Clust_Mdl_Moy_4CT  = []; # liste des cluster a afficher (à partir de 1)
 #AFC_Visu_Clust_Mdl_Moy_4CT = [1,2,3,4,5,6,7];
 #######################################################################
-case_label="Case_{}{}_NIJ{:d}".format(fprefixe,case_label_base,NIJ)
+case_label_base="Case_{}{}_NIJ{:d}".format(fprefixe,case_label_base,NIJ)
 #######################################################################
