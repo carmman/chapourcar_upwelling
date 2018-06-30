@@ -32,7 +32,12 @@ Modifs:
  25/06/18   Modifs pour identifier et sauver les figures
  15/06/18   Version fonctionnelle, modifs dans UW3_triedctk.py et dans ctLoopAnyS.py, ppalment
  12/06/18   Ajout de l'arrondi pour tableau de l'AFC
-    
+
+ 29/06/18   Ajout du code pour l'affichage du dendrogramme des codebooks.
+ 29/06/18   Modifications du code pour l'affichage des Annomalies mensuelles des donnees.
+ 30/06/18   Deplacement de tout le code (*.py, triedpy, figs, maps) dans le soureprtoire code
+            Modifications des path des fichiers de donnees pour retrouver le repertoire Datas
+            non deplacé
 '''
 #%=====================================================================
 def afcnuage (CP,cpa,cpb,Xcol,K,xoomK=500,linewidths=1,indname=None,cmap=cm.jet,
@@ -362,9 +367,9 @@ print("Initial case label: {}\n".format(case_label_base))
 # Lecture des Obs____________________________________
 if DATAOBS == "raverage_1975_2005" :
     if 0 : # Ca c'était avant
-        #sst_obs = np.load("Datas/sst_obs_1854a2005_25L36C.npy")
+        #sst_obs = np.load("../Datas/sst_obs_1854a2005_25L36C.npy")
         #lat: 29.5 à 5.5 ; lon: -44.5 à -9.5
-        sst_obs  = np.load("Datas/sst_obs_1854a2005_Y60X315.npy");
+        sst_obs  = np.load("../Datas/sst_obs_1854a2005_Y60X315.npy");
         data_label_base = "ERSSTv3bO-1975-2005"
         lat      = np.arange(29.5, 4.5, -1);
         lon      = np.arange(-44.5, -8.5, 1);
@@ -372,10 +377,10 @@ if DATAOBS == "raverage_1975_2005" :
         import netCDF4
         # -------------------------------------------------------------------------
         if 1 :
-            nc        = netCDF4.Dataset("./Datas/raverage_1975-2005/ersstv3b_1975-2005_extract_LON-315-351_LAT-30-5.nc");
+            nc        = netCDF4.Dataset("../Datas/raverage_1975-2005/ersstv3b_1975-2005_extract_LON-315-351_LAT-30-5.nc");
             data_label_base = "ERSSTv3b-1975-2005"
         else :
-            nc        = netCDF4.Dataset("./Datas/raverage_1975-2005/ersstv5_1975-2005_extract_LON-315-351_LAT-30-5.nc");
+            nc        = netCDF4.Dataset("../Datas/raverage_1975-2005/ersstv5_1975-2005_extract_LON-315-351_LAT-30-5.nc");
             data_label_base = "ERSSTv5-1975-2005"
         # -------------------------------------------------------------------------
         liste_var = nc.variables;       # mois par mois de janvier 1930 à decembre 1960 I guess
@@ -393,7 +398,7 @@ if DATAOBS == "raverage_1975_2005" :
 #
 elif DATAOBS == "raverage_1930_1960" :
     import netCDF4
-    nc      = netCDF4.Dataset("./Datas/raverage_1930-1960/ersstv3b_1930-1960_extract_LON-315-351_LAT-30-5.nc");
+    nc      = netCDF4.Dataset("../Datas/raverage_1930-1960/ersstv3b_1930-1960_extract_LON-315-351_LAT-30-5.nc");
     data_label_base = "ERSSTv3b-1930_1960"
     liste_var = nc.variables;       # mois par mois de janvier 1930 à decembre 1960 I guess
     sst_var   = liste_var['sst']    # 1960 - 1930 + 1 = 31 ; 31 * 12 = 372
@@ -410,7 +415,7 @@ elif DATAOBS == "raverage_1930_1960" :
 #    
 elif DATAOBS == "rcp_2006_2017" :
     import netCDF4
-    nc      = netCDF4.Dataset("./Datas/rcp_2006-2017/ersst.v3b._2006-2017_extrac-zone_LON-315-351_LAT-30-5.nc");
+    nc      = netCDF4.Dataset("../Datas/rcp_2006-2017/ersst.v3b._2006-2017_extrac-zone_LON-315-351_LAT-30-5.nc");
     data_label_base = "ERSSTv3b-2006_2017"
     liste_var = nc.variables;       # mois par mois de janvier 2006 à decembre 2017 I guess
     sst_var   = liste_var['sst']    # 2017 - 2006 + 1 = 12 ; 12 * 12 = 144
