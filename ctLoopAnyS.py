@@ -1292,8 +1292,8 @@ Tperfglob = Tperfglob[0:Nmodels];
 Tperfglob_Qm = np.array(Tperfglob_Qm)
 #
 # -----------------------------------------------------------------------
-fig120=plt.figure(200,figsize=(2,1),facecolor='r');
-# figure bidon pour forcer un numero de figure supperieur a 200 pour les prochaines figures
+fig120=plt.figure(120,figsize=(2,1),facecolor='r');
+# figure bidon pour forcer un numero de figure supperieur a 120 pour les prochaines figures
 # -----------------------------------------------------------------------
 # Edition des résultats
 if 0 : # (print) Tableau des performances
@@ -1477,74 +1477,82 @@ if NIJ > 0 :
         del metho_, dist_, coord2take
 #%%
 if NIJ > 0 : # A.F.C Clusters
+    max_nb_grpfig_afc = 6
+    min_nb_grpfig_afc = 4
     #-----------------------------------------
     # MODELE MOYEN (pondéré ou pas) PAR CLUSTER D'UNE CAH
     if 1 : # CAH on afc Models's coordinates (without obs !!!???)
         #
         class_afc = fcluster(Z_,nb_clust,'maxclust');
-        #
-        figclustmoy = plt.figure(figsize=(16,12));
-        plt.subplots_adjust(wspace=0.15, hspace=0.15, top=0.93, bottom=0.02, left=0.04, right=0.98)
-        figclustmoynum = figclustmoy.number
+        # -------------------------------------------------
         nclustcol = np.round(np.sqrt(nb_clust)).astype(int)
+        nclustcol = np.max([min_nb_grpfig_afc,nb_clust,nclustcol])
+        nclustcol = np.min([max_nb_grpfig_afc,nclustcol])
+        # -------------------------------------------------
         nclustlin = np.ceil(nb_clust/nclustcol).astype(int)
+        # -------------------------------------------------
+        #
+        figclustmoy = plt.figure(figsize=(3.5*nclustcol,1.5+2.0*nclustlin));
+        plt.subplots_adjust(wspace=0.15, hspace=0.15, top=0.85, bottom=0.02, left=0.04, right=0.96)
+        figclustmoynum = figclustmoy.number
+        #
         for ii in np.arange(nb_clust) :
-            iclust  = np.where(class_afc==ii+1)[0];
-            #
-            # Visu des Classif des modèles des cluster
-            if  ii+1 in AFC_Visu_Classif_Mdl_Clust :
-                print("par ici {}".format(ii))
-                fig = plt.figure(figsize=(16,12));
-                fignum = fig.number
-                for jj in np.arange(len(iclust)) :
-                    bmusj_   = ctk.mbmus (sMapO, Data=TDmdl4CTArr[iclust[jj]]);
-                    classej_ = class_ref[bmusj_].reshape(NDmdl);
-                    XCM_     = dto2d(classej_,LObs,CObs,isnumObs); # Classification géographique
-                    plt.subplot(7,7,jj+1);
-                    plt.imshow(XCM_, interpolation='none',cmap=ccmap, vmin=1,vmax=nb_class);
-                    plt.axis('off');
-                    plt.title(Tm_[iclust[jj]],fontsize=sztitle)
-                plt.suptitle("Classification des modèles du cluster %d"%(ii+1));
-            #
-            # Modèle Moyen d'un cluster
-            if 1 : # Non pondéré
-                CmdlMoy  = Dmdlmoy4CT(TDmdl4CTArr,iclust,pond=None);
-            elif 0 : # Pondéré                
-                if 1 : # par les contributions relatives ligne (i.e. modèles) (CRi) du plan
-                    pond = np.sum(CRi[:,[pa-1,po-1]],axis=1);
-                elif 0 : # par les contributions absolues ligne (i.e. modèles) (CAi) du plan
-                    pond = np.sum(CAi[:,[pa-1,po-1]],axis=1) 
-                elif 0 : # Proportionnelle à la perf global de chaque modèle ?
-                    pond = Tperfglob / sum(Tperfglob) 
-                CmdlMoy  = Dmdlmoy4CT (TDmdl4CTArr,iclust,pond=pond); # dans iclust y'a pas l'indice qui correspond aux Obs
-            #
-            #if 1 : # Affichage Data cluster moyen for CT
-            if  ii+1 in AFC_Visu_Clust_Mdl_Moy_4CT :
-                print("par la {}".format(ii))
-                aff2D(CmdlMoy,Lobs,Cobs,isnumobs,isnanobs,wvmin=wvmin,wvmax=wvmax,figsize=(12,9));
-                plt.suptitle("MdlMoy clust%d %s(%d-%d) for CT\nmin=%f, max=%f, moy=%f, std=%f"
-                        %(ii+1,fcodage,andeb,anfin,np.min(CmdlMoy),
-                          np.max(CmdlMoy),np.mean(CmdlMoy),np.std(CmdlMoy)))
-            #
-            # Classification du modèles moyen d'un cluster
-            #plt.figure(figclustmoy.number); plt.subplot(3,3,ii+1);
-            plt.figure(figclustmoy.number)
-            ax=plt.subplot(nclustcol,nclustlin,ii+1);
-            Perfglob_ = Dgeoclassif(sMapO,CmdlMoy,LObs,CObs,isnumObs,axoff=False,ax=ax)
-            #plt.axis('on');
-            ##plt.xticks([]); plt.yticks([]) # poue avoir le box autour de la figure
-            #plt.box('on')
-            if len(iclust) == 1 :
-                plt.title("cluster {:d}, perf={:.0f}% ('{}')".format(ii+1,100*Perfglob_,
-                          np.array(lignames)[iclust][0],fontsize=sztitle+2)); #,fontweigth='bold');
-            else :
-                plt.title("cluster %d, perf=%.0f%c (%d mod.)"%(ii+1,100*Perfglob_,'%',
-                          len(iclust)),fontsize=sztitle+2); #,fontweigth='bold');
-            if 1 :
-                # TmdlnameArr OU lignames ???
-                #print("%d Modèles du cluster %d :\n"%(len(iclust),ii+1), TmdlnameArr[iclust]); ##!!??
-                print("\n-- Cluster {:d} : {:d} Modèles, Perf= {:.1f}%\n {}".format(ii+1,
-                      len(iclust),100*Perfglob_,np.array(lignames)[iclust])); ##!!??
+            if ii < nb_clust :
+                iclust  = np.where(class_afc==ii+1)[0];
+                # Visu des Classif des modèles des cluster
+                if  ii+1 in AFC_Visu_Classif_Mdl_Clust :
+                    print("par ici {}".format(ii))
+                    fig = plt.figure(figsize=(16,12));
+                    fignum = fig.number
+                    for jj in np.arange(len(iclust)) :
+                        bmusj_   = ctk.mbmus (sMapO, Data=TDmdl4CTArr[iclust[jj]]);
+                        classej_ = class_ref[bmusj_].reshape(NDmdl);
+                        XCM_     = dto2d(classej_,LObs,CObs,isnumObs); # Classification géographique
+                        plt.subplot(7,7,jj+1);
+                        plt.imshow(XCM_, interpolation='none',cmap=ccmap, vmin=1,vmax=nb_class);
+                        plt.axis('off');
+                        plt.title(Tm_[iclust[jj]],fontsize=sztitle)
+                    plt.suptitle("Classification des modèles du cluster %d"%(ii+1));
+                #
+                # Modèle Moyen d'un cluster
+                if 1 : # Non pondéré
+                    CmdlMoy  = Dmdlmoy4CT(TDmdl4CTArr,iclust,pond=None);
+                elif 0 : # Pondéré                
+                    if 1 : # par les contributions relatives ligne (i.e. modèles) (CRi) du plan
+                        pond = np.sum(CRi[:,[pa-1,po-1]],axis=1);
+                    elif 0 : # par les contributions absolues ligne (i.e. modèles) (CAi) du plan
+                        pond = np.sum(CAi[:,[pa-1,po-1]],axis=1) 
+                    elif 0 : # Proportionnelle à la perf global de chaque modèle ?
+                        pond = Tperfglob / sum(Tperfglob) 
+                    CmdlMoy  = Dmdlmoy4CT (TDmdl4CTArr,iclust,pond=pond); # dans iclust y'a pas l'indice qui correspond aux Obs
+                #
+                #if 1 : # Affichage Data cluster moyen for CT
+                if  ii+1 in AFC_Visu_Clust_Mdl_Moy_4CT :
+                    print("par la {}".format(ii))
+                    aff2D(CmdlMoy,Lobs,Cobs,isnumobs,isnanobs,wvmin=wvmin,wvmax=wvmax,figsize=(12,9));
+                    plt.suptitle("MdlMoy clust%d %s(%d-%d) for CT\nmin=%f, max=%f, moy=%f, std=%f"
+                            %(ii+1,fcodage,andeb,anfin,np.min(CmdlMoy),
+                              np.max(CmdlMoy),np.mean(CmdlMoy),np.std(CmdlMoy)))
+                #
+                # Classification du modèles moyen d'un cluster
+                #plt.figure(figclustmoy.number); plt.subplot(3,3,ii+1);
+                plt.figure(figclustmoy.number)
+                ax=plt.subplot(nclustlin,nclustcol,ii+1);
+                Perfglob_ = Dgeoclassif(sMapO,CmdlMoy,LObs,CObs,isnumObs,axoff=False,ax=ax)
+                plt.axis('on');
+                plt.xticks([]); plt.yticks([]) # poue avoir le box autour de la figure
+                #plt.box('on')
+                if len(iclust) == 1 :
+                    plt.title("cluster {:d}, perf={:.0f}% ('{}')".format(ii+1,100*Perfglob_,
+                              np.array(lignames)[iclust][0],fontsize=sztitle+2)); #,fontweigth='bold');
+                else :
+                    plt.title("cluster %d, perf=%.0f%c (%d mod.)"%(ii+1,100*Perfglob_,'%',
+                              len(iclust)),fontsize=sztitle+2); #,fontweigth='bold');
+                if 1 :
+                    # TmdlnameArr OU lignames ???
+                    #print("%d Modèles du cluster %d :\n"%(len(iclust),ii+1), TmdlnameArr[iclust]); ##!!??
+                    print("\n-- Cluster {:d} : {:d} Modèles, Perf= {:.1f}%\n {}".format(ii+1,
+                          len(iclust),100*Perfglob_,np.array(lignames)[iclust])); ##!!??
         plt.suptitle("AFC Clusters - [{}]".format(case_label),fontsize=18)
         if SAVEFIG :
             figfile = "F{:d}_{:s}{:s}_{:s}_{:d}cl_AFC-Clusters-{:d}cl".format(figclustmoynum,fprefixe,SIZE_REDUCTION,fshortcode,nb_class,nb_clust)
