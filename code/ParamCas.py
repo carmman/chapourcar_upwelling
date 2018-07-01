@@ -53,35 +53,39 @@ if DATAMDL=="rcp_2006_2017" :      # on précise le scénario
 #     = 2 : perf par classe
 #     = 3 : nombre d'elt bien classés par classe
 #           (le seul qui devrait survivre à mon sens)
-if 0 : # conditions Charles: GRANDE ZONE
+#
+if 1 : # conditions Code Charles: GRANDE ZONE
     # A - Grande zone de l’upwelling (25x36) : Longitude : -44 à -9.5 ; Latitude : 29.5 à 5.5
     #   * Carte topologique et CAH : 30x4 (5, 5, 1, - 16, 1, 0.1) : TE=0.6824 ; QE=0.153757
     #   Nb_classe = 7
-    nbl      = 30;  nbc =  4;  # Taille de la carte
-    Parm_app = ( 5, 5., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
+    nbl            = 30;  nbc =  4;  # Taille de la carte
+    Parm_app       = ( 5, 5., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
     SIZE_REDUCTION = 'All';
-    nb_class   = 7; #6, 7, 8  # Nombre de classes retenu
+    nb_class       = 7; #6, 7, 8  # Nombre de classes retenu
     # et CAH for cluster with AFC
-    NIJ = 2; 
+    NIJ            = 2;
+    PerfGlobIsMean = True;
     nb_clust       = 4; # Nombre de cluster
-    NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
+    #NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
+    NBCOORDAFC4CAH = nb_class; # n premières coordonnées de l'afc à
                     # utiliser pour faire la CAH (limité à nb_class-1).
-elif 1 : # conditions Charles: PETITE ZONE
+elif 1 : # conditions Code Charles: PETITE ZONE
     # B - Sous-zone ciblant l’upwelling (13x12) :    LON: 16W à 28W LAT : 10N à 23N
     #   * Carte topologique et CAH : 17x6 (4, 4, 1, - 16, 1, 0.1) : TE=0.6067 ; QE=0.082044
     #   Nb_classe = 4
-    nbl      = 17;  nbc =  6;  # Taille de la carte
-    Parm_app = ( 4, 4., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
+    nbl            = 17;  nbc =  6;  # Taille de la carte
+    Parm_app       = ( 4, 4., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
     SIZE_REDUCTION = 'sel';
-    nb_class   = 4; #6, 7, 8  # Nombre de classes retenu
+    nb_class       = 4; #6, 7, 8  # Nombre de classes retenu
     # et CAH for cluster with AFC
-    NIJ = 2; 
+    NIJ            = 2;
+    PerfGlobIsMean = True;
     nb_clust       = 5; # Nombre de cluster
     NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
-else :
+else : # valeurs par defaut
     #nbl      = 6;  nbc =  6;  # Taille de la carte
     #nbl      = 30;  nbc =  4;  # Taille de la carte
-    nbl      = 36;  nbc =  6;  # Taille de la carte
+    nbl       = 36;  nbc =  6;  # Taille de la carte
     #nbl      = 52;  nbc =  8;  # Taille de la carte
     # -------------------------------------------------------------------------
     #Parm_app = ( 5, 5., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
@@ -96,6 +100,9 @@ else :
     nb_class   = 7; #6, 7, 8  # Nombre de classes retenu
     # -------------------------------------------------------------------------
     NIJ        = 2; # cas de
+    # -------------------------------------------------------------------------
+    PerfGlobIsMean = True;
+    #PerfGlobIsMean = False;
     # -------------------------------------------------------------------------
     nb_clust   = 7; # Nombre de cluster
     NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
@@ -115,16 +122,24 @@ TRANSCOCLASSE = 'STD'; # Permet le transcodage des classes de façon à ce
     # Avec la valeur '' le transcodage n'est pas requis.
 #
 # -----------------------------------------------------------------------------
-FONDTRANS = "Obs"; # "Obs"
+FONDTRANS  = "Obs"; # "Obs"
 #
 # -----------------------------------------------------------------------------
-FIGSDIR   = 'figs'
-#SAVEFIG   = False;
-SAVEFIG   = True;
+FIGSDIR    = 'figs'
+#SAVEFIG    = False;
+SAVEFIG    = True;
 # -----------------------------------------------------------------------------
-MAPSDIR   = 'maps'
-#SAVEMAP   = False;
-SAVEMAP   = True;
+MAPSDIR    = 'maps'
+#SAVEMAP    = False;
+SAVEMAP    = True;
+# -----------------------------------------------------------------------------
+#REWRITEMAP = True;
+REWRITEMAP = False;
+# -----------------------------------------------------------------------------
+#RELOADMAP = True;
+RELOADMAP = False;
+# -----------------------------------------------------------------------------
+mapfileext = ".pkl" # exten,sion du fichier des MAP
 # -----------------------------------------------------------------------------
 #
 if SIZE_REDUCTION == 'All' :
@@ -228,4 +243,6 @@ AFC_Visu_Clust_Mdl_Moy_4CT  = []; # liste des cluster a afficher (à partir de 1
 #AFC_Visu_Clust_Mdl_Moy_4CT = [1,2,3,4,5,6,7];
 #######################################################################
 case_label_base="Case_{}{}_NIJ{:d}".format(fprefixe,case_label_base,NIJ)
+if PerfGlobIsMean :
+    case_label_base += "_PGIM"
 #######################################################################

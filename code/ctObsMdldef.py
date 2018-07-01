@@ -369,9 +369,9 @@ def deltalargeM12(X,L,C,isnum) :
     return Xm_[isnum,:]
 
 #======================================================================
-def perfbyclass (classe_Dobs,classe_Dmdl,nb_class) :
+def perfbyclass (classe_Dobs,classe_Dmdl,nb_class,globismean=False) :
     NDobs = len(classe_Dobs);
-    perfcum = 0; # to check
+    perflist = []; # to check
     Tperf = [];
     classe_DD = np.ones(NDobs)*np.nan; 
     for c in np.arange(nb_class)+1 :      
@@ -388,8 +388,14 @@ def perfbyclass (classe_Dobs,classe_Dmdl,nb_class) :
         else :
             perfc = 0.0; # ... à voir ... 
         Tperf.append(perfc)
-        perfcum = perfcum + (Niobsc * perfc); # to check
-    Perfglob = perfcum/NDobs;
+        if globismean :
+            perflist.append(perfc); # cummule la performance de la classe
+        else:
+            perflist.append(Niobsc * perfc); # cummule la performance ponderee par le nombre de pixels Obs dans la classe
+    if globismean :
+        Perfglob = np.mean(perflist);
+    else:
+        Perfglob = np.sum(perflist)/NDobs;
     return classe_DD, Tperf, Perfglob
 
 def red_classgeo(X,isnum,classe_D,frl,tol,frc,toc) :

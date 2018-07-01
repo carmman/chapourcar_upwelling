@@ -1,6 +1,7 @@
 # -*- coding: cp1252 -*-
 import sys
 import os
+import pickle
 import time as time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -205,7 +206,7 @@ def Dmdlmoy4CT (TDmdl4CT,igroup,pond=None) :
         CmdlMoy    = CmdlMoy / np.sum(pond);
     return CmdlMoy; # Cluster modèle Moyen
 #
-def Dgeoclassif(sMap,Data,L,C,isnum,aximage=True,axoff=True,ax=None) :
+def Dgeoclassif(sMap,Data,L,C,isnum,aximage=True,axoff=True,ax=None,globismean=False) :
     bmus_   = ctk.mbmus (sMap,Data);
     classe_ = class_ref[bmus_].reshape(NDmdl);   
     X_Mgeo_ = dto2d(classe_,L,C,isnum); # Classification géographique
@@ -215,7 +216,8 @@ def Dgeoclassif(sMap,Data,L,C,isnum,aximage=True,axoff=True,ax=None) :
         ax = plt.gca()
     im = ax.imshow(X_Mgeo_, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
     #
-    classe_DD_, Tperf_, Perfglob_ = perfbyclass(classe_Dobs,classe_, nb_class);
+    classe_DD_, Tperf_, Perfglob_ = perfbyclass(classe_Dobs,classe_, nb_class,
+                                                globismean=globismean);
     Tperf_ = np.round([iperf*100 for iperf in Tperf_]).astype(int); #print(Tperf_)
     ax_divider = make_axes_locatable(ax)
     cax = ax_divider.append_axes("right", size="4%", pad="1%")
@@ -334,6 +336,23 @@ def plot_classes(sMapO,sst_obs,Dobs,NDobs,listofclasses):
         #grid(); # for easier check
     plt.suptitle("obs, classe géog., Method %s [%s]"%(method_cah,case_label),fontsize=18); #,fontweigth='bold');
     #plt.show(); sys.exit(0)
+
+def _printwarning0(msg):
+    if isinstance(msg, (list,)) :
+        for m in msg :
+            print(" * {:74s} *".format(m)) 
+    else:
+        print(" * {:74s} *".format(msg))
+    print(" * {:74s} *".format(" "))
+
+def printwarning(msg, msg2=None, msg3=None):
+    print("\n ******************************************************************************")
+    _printwarning0(msg)
+    if msg2 is not None :
+        _printwarning0(msg2)
+    if msg3 is not None :
+        _printwarning0(msg3)
+    print(" ******************************************************************************\n")
 
 #%% ###################################################################
 # INITIALISATION
@@ -555,26 +574,79 @@ if 1 : # Visu (et sauvegarde éventuelle de la figure) des données telles
 tseed = 0;
 #tseed = 9;
 #tseed = np.long(time());
-print("tseed=",tseed); np.random.seed(tseed);
-#----------------------------------------------------------------------
-# Création de la structure de la carte_______________
-norm_method = 'data'; # je n'utilise pas 'var' mais je fais centred à
-                      # la place (ou pas) qui est équivalent, mais qui
-                      # me permet de garder la maitrise du codage
-sMapO = SOM.SOM('sMapObs', Dobs, mapsize=[nbl, nbc], norm_method=norm_method, \
-              initmethod='random', varname=varnames)
-print("NDobs(sm.dlen)=%d, dim(Dapp)=%d\nCT : %dx%d=%dunits" \
-      %(sMapO.dlen,sMapO.dim,nbl,nbc,sMapO.nnodes));
-#
-# Apprentissage de la carte _________________________
-etape1=[epoch1,radini1,radfin1];    etape2=[epoch2,radini2,radfin2];
-#sMapO.train(etape1=etape1,etape2=etape2, verbose='on');
-qerr = sMapO.train(etape1=etape1,etape2=etape2, verbose='on', retqerrflg=True);
-# + err topo maison
-bmus2O = ctk.mbmus (sMapO, Data=None, narg=2);
-etO    = ctk.errtopo(sMapO, bmus2O); # dans le cas 'rect' uniquement
-#print("Obs, erreur topologique = %.4f" %etO)
-print("Obs,\n  case: {}\n  tseed={} ... qerr={:8.6f} ... terr={:.4f}".format(case_label,tseed,qerr,etO))
+DO_NEXT = True
+if SAVEMAP : # SI sauvegarde de la Map de SOM est ACTIVE
+    mapfile = "Map_{:s}{:s}Clim-{:d}-{:d}_{:s}_ts-{}{}".format(fprefixe,fshortcode,
+                   andeb,anfin,data_label_base,tseed,mapfileext)
+    mapPathAndFile = case_maps_dir+os.sep+mapfile
+    if os.path.exists(mapPathAndFile) and not REWRITEMAP :
+        printwarning([ u"Attention, le fichier MAP existe déjà, ",
+                       "'{}'".format(mapPathAndFile),
+                       u"on saute le processus d'entrainemant de la MAP." ],
+                     u"Activez REWRITEMAP pour reecrire.")
+        DO_NEXT = False
+if DO_NEXT :
+    print("tseed=",tseed); np.random.seed(tseed);
+    #----------------------------------------------------------------------
+    # Création de la structure de la carte_______________
+    norm_method = 'data'; # je n'utilise pas 'var' mais je fais centred à
+                          # la place (ou pas) qui est équivalent, mais qui
+                          # me permet de garder la maitrise du codage
+    sMapO = SOM.SOM('sMapObs', Dobs, mapsize=[nbl, nbc], norm_method=norm_method, \
+                  initmethod='random', varname=varnames)
+    print("NDobs(sm.dlen)=%d, dim(Dapp)=%d\nCT : %dx%d=%dunits" \
+          %(sMapO.dlen,sMapO.dim,nbl,nbc,sMapO.nnodes));
+    #
+    # Apprentissage de la carte _________________________
+    etape1=[epoch1,radini1,radfin1];    etape2=[epoch2,radini2,radfin2];
+    #sMapO.train(etape1=etape1,etape2=etape2, verbose='on');
+    qerr = sMapO.train(etape1=etape1,etape2=etape2, verbose='on', retqerrflg=True);
+    # + err topo maison
+    bmus2O = ctk.mbmus (sMapO, Data=None, narg=2);
+    etO    = ctk.errtopo(sMapO, bmus2O); # dans le cas 'rect' uniquement
+    #print("Obs, erreur topologique = %.4f" %etO)
+    print("Obs,\n  case: {}\n  tseed={} ... qerr={:8.6f} ... terr={:.4f}".format(case_label,
+          tseed,qerr,etO))
+    if SAVEMAP : # sauvegarde de la Map de SOM
+        printwarning([ "==> Saving MAP in file :",
+                       "    '{}'".format(mapPathAndFile) ])
+        map_d ={ "map" : sMapO }
+        map_f = open(mapPathAndFile, 'wb')
+        pickle.dump(map_d, map_f)
+        map_f.close()
+elif os.path.exists(mapPathAndFile) and RELOADMAP :
+        #reload object from file
+        printwarning([ "==> Loading MAP from file :",
+                       "    '{}'".format(mapPathAndFile) ])
+        map_f = open(mapPathAndFile, 'rb')
+        map_d = pickle.load(map_f)
+        map_f.close()
+        sMapO = map_d['map']
+else :
+    try :
+        # un print utilisant sMapO, s'il nexiste pas declanche une exeption !
+        print("Current sMap name {}".format(sMapO.name))
+        
+    except Exception as exc :
+        print("\n*** {:*<66s} ***".format("*"))
+        print("*** {:66s} ***".format(" "))
+        print("*** {:^66s} ***".format("Can't continue, no sMap in memory"))
+        if not REWRITEMAP :
+            print("*** {:^66s} ***".format("Think to activate REWRITEMAP variable and rerun"))
+        print("*** {:66s} ***".format(" "))
+        print("*** {:*<66s} ***\n***".format("*"))
+        print("*** exception type .. {} ".format(exc.__class__))
+        # affiche exception de type  exceptions.ZeroDivisionError
+        print("*** message ......... {}".format(exc))
+        print("***\n*** {:*<66s} ***\n***".format("*"))
+        # Force l'arret (ou l'activation d'un try a plus haut niveau, s'il existe)
+        raise Exception("*** no sMap in memory, stop running ***")
+        #sys.exit()
+
+    else :
+        print("Using current sMap of size {}".format(sMapO.mapsize))
+
+del DO_NEXT
 #%%
 # Visualisation______________________________________
 if 0 : #==>> la U_matrix
@@ -844,14 +916,14 @@ for imodel in np.arange(Nmodels) :
     #________________________________________________
     # Lecture des données
     if DATAMDL=="raverage_1975_2005" : # fichiers.mat générés par Carlos
-        datalib = 'Datas/raverage_1975-2005/sst_'
+        datalib = '../Datas/raverage_1975-2005/sst_'
         try :
             sst_mat = scipy.io.loadmat(datalib+mdlname+"_raverage_1975-2005.mat");
         except :
             continue;
         sst_mdl = sst_mat['SST'];       
     elif DATAMDL=="raverage_1930_1960" : # fichiers.mat générés par Carlos
-        datalib = 'Datas/raverage_1930-1960/sst_'
+        datalib = '../Datas/raverage_1930-1960/sst_'
         try :
             sst_mat = scipy.io.loadmat(datalib+mdlname+"_raverage_1930-1960.mat");
         except :
@@ -859,7 +931,7 @@ for imodel in np.arange(Nmodels) :
         sst_mdl = sst_mat['SST'];      
     elif DATAMDL == "rcp_2006_2017" : # fichiers.mat scénarios générés par Carlos.
         # dédiés à l'étude de la généralisation
-        datalib = "Datas/rcp_2006-2017/%s/sst_"%scenar
+        datalib = "../Datas/rcp_2006-2017/%s/sst_"%scenar
         try :
             sst_mat = scipy.io.loadmat(datalib+mdlname+"_raverage_2006-2017.mat");
         except :
@@ -926,6 +998,7 @@ for imodel in np.arange(Nmodels) :
     bmusM       = ctk.mbmus (sMapO, Data=Dmdl);
     classe_DMdl = class_ref[bmusM].reshape(NDmdl);
     perfglob    = len(np.where(classe_DMdl==classe_Dobs)[0])/NDobs
+    #print("perfglob: {}".format(perfglob))
     Tperfglob4Sort.append(perfglob)
     Tclasse_DMdl.append(classe_DMdl)
     #
@@ -1040,8 +1113,11 @@ for imodel in np.arange(Nmodels) : ##!!??
         #sst_mdl, XC_mgeo, classe_Dmdl, isnum_red = red_classgeo(sst_Mdl,isnumObs,classe_DMdl,frl,tol,frc,toc);
         sst_mdl, XC_mgeo, classe_Dmdl, isnum_red = red_classgeo(sst_mdl,isnumObs,classe_DMdl,frl,tol,frc,toc);
     #<<<<<<<<<<<
-    #
-    classe_DD, Tperf, Perfglob = perfbyclass(classe_Dobs,classe_Dmdl,nb_class);
+    # perfbyclass (classe_Dobs,classe_Dmdl,nb_class,globismean=False) :
+    if PerfGlobIsMean :
+        classe_DD, Tperf, Perfglob = perfbyclass(classe_Dobs,classe_Dmdl,nb_class,globismean=True);
+    else:
+        classe_DD, Tperf, Perfglob = perfbyclass(classe_Dobs,classe_Dmdl,nb_class);
     #else : # Perf Indice de Rand (does not work yet) voir version précédante
     #
     Tperf = np.round([i*100 for i in Tperf]).astype(int); #print(Tperf)
@@ -1130,7 +1206,11 @@ for imodel in np.arange(Nmodels) : ##!!??
         XC_mgeo_Qm    = dto2d(classe_DMdl_Qm,Lobs,Cobs,isnumobs); # Classification géographique
                        # Mise sous forme 2D de classe_D*, en mettant nan pour les
                        # pixels mas classés
-        classe_DD_Qm, Tperf_Qm, Perfglob_Qm = perfbyclass(classe_Dobs, classe_DMdl_Qm, nb_class);
+        if PerfGlobIsMean :
+            classe_DD_Qm, Tperf_Qm, Perfglob_Qm = perfbyclass(classe_Dobs, classe_DMdl_Qm, nb_class,
+                                                              globismean=True);
+        else :
+            classe_DD_Qm, Tperf_Qm, Perfglob_Qm = perfbyclass(classe_Dobs, classe_DMdl_Qm, nb_class);
                        # Ici pour classe_DD* : les pixels bien classés sont valorisés avec
                        # leur classe, et les mals classés ont nan
         Tperf_Qm = np.round([i*100 for i in Tperf_Qm]).astype(int); #print(Tperf)
@@ -1543,7 +1623,11 @@ if NIJ > 0 : # A.F.C Clusters
                 #plt.figure(figclustmoy.number); plt.subplot(3,3,ii+1);
                 plt.figure(figclustmoy.number)
                 ax=plt.subplot(nclustlin,nclustcol,ii+1);
-                Perfglob_ = Dgeoclassif(sMapO,CmdlMoy,LObs,CObs,isnumObs,axoff=False,ax=ax)
+                if PerfGlobIsMean :
+                    Perfglob_ = Dgeoclassif(sMapO,CmdlMoy,LObs,CObs,isnumObs,axoff=False,ax=ax,
+                                            globismean=True)
+                else :
+                    Perfglob_ = Dgeoclassif(sMapO,CmdlMoy,LObs,CObs,isnumObs,axoff=False,ax=ax)
                 plt.axis('on');
                 plt.xticks([]); plt.yticks([]) # poue avoir le box autour de la figure
                 #plt.box('on')
@@ -1807,7 +1891,10 @@ def mixtgeneralisation (TMixtMdl) :
     # Classification du modèles moyen
     fig = plt.figure();
     fignum = fig.number
-    Perfglob_ = Dgeoclassif(sMapO,MdlMoy,LObs,CObs,isnumObs);
+    if PerfGlobIsMean :
+        Perfglob_ = Dgeoclassif(sMapO,MdlMoy,LObs,CObs,isnumObs,globismean=True)
+    else :
+        Perfglob_ = Dgeoclassif(sMapO,MdlMoy,LObs,CObs,isnumObs);
     ##!!?? plt.title("MdlMoy(%s), perf=%.0f%c"%(Tmdlok[IMixtMdl,0],100*Perfglob_,'%'),fontsize=sztitle); #,fontweigth='bold');
     plt.title("MdlMoy(%s), perf=%.0f%c"%(TmdlnameArr[IMixtMdl],100*Perfglob_,'%'),fontsize=sztitle); #,fontweigth='bold');
     #tls.klavier();
