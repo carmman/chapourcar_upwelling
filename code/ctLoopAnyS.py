@@ -3,6 +3,7 @@ import sys
 import os
 import pickle
 import time as time
+from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from   matplotlib import cm
@@ -360,6 +361,10 @@ def printwarning(msg, msg2=None, msg3=None):
 #======================================================================
 plt.rcParams.update({'figure.max_open_warning': 0})
 #
+casetime=datetime.now()
+casetimelabel = casetime.strftime("%d %b %Y @ %H:%M:%S")
+casetimeTlabel = casetime.strftime("%Y%m%dT%H%M%S")
+#
 tpgm0 = time();
 plt.ion()
 #
@@ -525,7 +530,7 @@ if WITHANO :
     #wvmin=-4.3; wvmax = 4.9; # ok pour obs 2006-2017 : ANO 4CT: min=-4.2712; max=4.3706
     wvmin = -4.9; wvmax = 4.9; # pour mettre tout le monde d'accord ?
 else : # On suppose qu'il s'agit du brute ...
-    wvmin =16.0; wvmax =30.0; # ok pour obs 1975-2005 : SST 4CT: min=16.8666; max=29.029
+    wvmin =16.0; wvmax = 30.0; # ok pour obs 1975-2005 : SST 4CT: min=16.8666; max=29.029
 #    
 if 1 : # Visu (et sauvegarde éventuelle de la figure) des données telles
        # qu'elles vont etre utilisées par la Carte Topologique
@@ -592,25 +597,39 @@ if DO_NEXT :
     norm_method = 'data'; # je n'utilise pas 'var' mais je fais centred à
                           # la place (ou pas) qui est équivalent, mais qui
                           # me permet de garder la maitrise du codage
-    sMapO = SOM.SOM('sMapObs', Dobs, mapsize=[nbl, nbc], norm_method=norm_method, \
-                  initmethod='random', varname=varnames)
+    sMapO = SOM.SOM('sMapObs', Dobs,
+                    mapsize=[nbl, nbc],
+                    norm_method=norm_method, 
+                    initmethod='random',
+                    varname=varnames)
     print("NDobs(sm.dlen)=%d, dim(Dapp)=%d\nCT : %dx%d=%dunits" \
           %(sMapO.dlen,sMapO.dim,nbl,nbc,sMapO.nnodes));
+    print("Two phases training:")
+    print(" - Phase 1: {0[0]} epochs for radius variing from {0[1]} to {0[2]}".format(Parm_app))
+    print(" - Phase 2: {0[3]} epochs for radius variing from {0[4]} to {0[5]}".format(Parm_app))
+    #----------------------------------------------------------------------
     #
     # Apprentissage de la carte _________________________
     etape1=[epoch1,radini1,radfin1];    etape2=[epoch2,radini2,radfin2];
+    ttrain0 = time();
     #sMapO.train(etape1=etape1,etape2=etape2, verbose='on');
     qerr = sMapO.train(etape1=etape1,etape2=etape2, verbose='on', retqerrflg=True);
+    print("Training elapsed time {:.4f}s".format(time()-ttrain0));
+    #----------------------------------------------------------------------
     # + err topo maison
     bmus2O = ctk.mbmus (sMapO, Data=None, narg=2);
     etO    = ctk.errtopo(sMapO, bmus2O); # dans le cas 'rect' uniquement
     #print("Obs, erreur topologique = %.4f" %etO)
-    print("Obs,\n  case: {}\n  tseed={} ... qerr={:8.6f} ... terr={:.4f}".format(case_label,
-          tseed,qerr,etO))
+    somtime = casetime
+    print("Two phases training executed:")
+    print(" - Phase 1: {0[0]} epochs for radius variing from {0[1]} to {0[2]}".format(Parm_app))
+    print(" - Phase 2: {0[3]} epochs for radius variing from {0[4]} to {0[5]}".format(Parm_app))
+    print("Obs case: {}\n          date ... {}]\n          tseed={} ... qerr={:8.6f} ... terr={:.4f}".format(case_label,
+          casetimelabel,tseed,qerr,etO))
     if SAVEMAP : # sauvegarde de la Map de SOM
         printwarning([ "==> Saving MAP in file :",
                        "    '{}'".format(mapPathAndFile) ])
-        map_d ={ "map" : sMapO }
+        map_d ={ "map" : sMapO, "tseed" : tseed, "somtime" : somtime }
         map_f = open(mapPathAndFile, 'wb')
         pickle.dump(map_d, map_f)
         map_f.close()
@@ -622,6 +641,18 @@ elif os.path.exists(mapPathAndFile) and RELOADMAP :
         map_d = pickle.load(map_f)
         map_f.close()
         sMapO = map_d['map']
+        tseed = map_d['tseed'] # seed used whent initializing sMapO, originally
+        somtime = map_d['somtime'] # seed used whent initializing sMapO, originally
+        somtimelabel = somtime.strftime("%d %b %Y @ %H:%M:%S")
+        somtimeTlabel = somtime.strftime("%Y%m%dT%H%M%S")
+        #            err = np.mean(getattr(self, 'bmu')[1])
+        qerr = np.mean(sMapO.bmu[1])
+        # + err topo maison
+        bmus2O = ctk.mbmus (sMapO, Data=None, narg=2);
+        etO    = ctk.errtopo(sMapO, bmus2O); # dans le cas 'rect' uniquement
+        #print("Obs, erreur topologique = %.4f" %etO)
+        print("Obs case: {}\n          loaded sMap date ... {}]\n          used tseed={} ... qerr={:8.6f} ... terr={:.4f}".format(case_label,
+              sometimelabel,tseed,qerr,etO))
 else :
     try :
         # un print utilisant sMapO, s'il nexiste pas declanche une exeption !
@@ -679,7 +710,7 @@ if 1 :
         figfile = "F{:d}_{:s}{:s}_".format(fignum,fprefixe,fshortcode)
     if 1:
         # top-down dendogram ---------------
-        plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.08, left=0.04, right=0.99)
+        plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.92, bottom=0.10, left=0.04, right=0.99)
         # ----------------------------------
         R_ = dendrogram(Z_,p=Ncell,truncate_mode=None,color_threshold=color_threshold,
                         orientation='top',leaf_font_size=10) #,labels=lignames
@@ -1501,14 +1532,14 @@ if NIJ > 0 :
         max_d = np.sum(Z_[[-nb_clust+1,-nb_clust],2])/2
         color_threshold = max_d
         # --------------------------------------------------------------------
-        fig = plt.figure(figsize=(18,11),facecolor='w');
+        fig = plt.figure(figsize=(18,12),facecolor='w');
         #fig = plt.figure()
         fignum = fig.number
         if SAVEFIG :
             figfile = "F{:d}_{:s}{:s}_{:s}_{:d}cl_".format(fignum,fprefixe,SIZE_REDUCTION,fshortcode,nb_class)
         if 1:
             # top-down dendogram ---------------
-            plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.17, left=0.04, right=0.99)
+            plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.92, bottom=0.24, left=0.05, right=0.98)
             # ----------------------------------
             Rlp_ = dendrogram(Z_,p=Nmdlok,truncate_mode='lastp',labels=lignames,
                               orientation='top',get_leaves=True,no_plot=True);
@@ -1526,7 +1557,7 @@ if NIJ > 0 :
             plt.tick_params(axis='x',which='major',direction='out',length=3,pad=1,top=False,   #otation_mode='anchor',
                             labelrotation=-80)
             plt.grid(axis='y')
-            plt.xlabel('nom du modele', labelpad=0, fontsize=14)
+            plt.xlabel('modele name', labelpad=0, fontsize=14)
             plt.ylabel("distance ({})".format(method_cah), fontsize=14)
             lax=plt.axis(); daxy=(lax[3]-lax[2])/400
             plt.axis([lax[0],lax[1],lax[2]-daxy,lax[3]])
@@ -1534,7 +1565,7 @@ if NIJ > 0 :
                 figfile += "Top-AFC-dendrogram"
         else:
             # left-to-right dendogram ---------------
-            plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.05, left=0.09, right=0.99)
+            plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.92, bottom=0.08, left=0.11, right=0.98)
             # ----------------------------------
             R_ = dendrogram(Z_,p=Nmdlok,truncate_mode=None,color_threshold=color_threshold,
                             orientation='right',labels=lignames,leaf_font_size=10);
@@ -1547,7 +1578,7 @@ if NIJ > 0 :
             plt.tick_params(axis='y',which='major',direction='out',length=4,pad=2,left=True,right=False,
                             labelleft=True,labelright=False,labelsize=8)
             plt.grid(axis='x')
-            plt.ylabel('nom du modele',rotation=-90, labelpad=10, fontsize=14)
+            plt.ylabel('modele name',rotation=-90, labelpad=10, fontsize=14)
             plt.xlabel("distance ({})".format(method_cah), fontsize=14)
             # decale tres legerement les axes pour
             lax=plt.axis(); daxx=(lax[0]-lax[1])/1200
@@ -1556,7 +1587,7 @@ if NIJ > 0 :
                 figfile += "Left-AFC-dendrogram"
         del R_ # L_
         plt.title("AFC: Coord(%s) dendrogram [%s]\nMétho=%s, dist=%s, nb_clust=%d"
-                  %((coord2take+1).astype(str),case_label,metho_,dist_,nb_clust), fontsize=18)
+                  %((coord2take+1).astype(str),case_label,metho_,dist_,nb_clust), fontsize=16)
         if SAVEFIG :
             plt.savefig(case_figs_dir+os.sep+figfile)
         del metho_, dist_, coord2take
@@ -1883,21 +1914,38 @@ def mixtgeneralisation (TMixtMdl) :
     # Modèle moyen
     MdlMoy = Dmdlmoy4CT(TDmdl4CTArr,IMixtMdl);
     if 1 : # Affichage du moyen for CT
-        aff2D(MdlMoy,Lobs,Cobs,isnumobs,isnanobs,wvmin=wvmin,wvmax=wvmax,figsize=(12,9));
-        plt.suptitle("MdlMoy %s(%d-%d) for CT\nmin=%f, max=%f, moy=%f, std=%f"
-                    %(fcodage,andeb,anfin,np.min(MdlMoy),
+        if SIZE_REDUCTION == 'All' :
+            figsize = (10.5,5.5)
+        elif SIZE_REDUCTION == 'sel' :
+            figsize=(10,8)
+        fig = plt.figure(figsize=figsize,facecolor='w')
+        fignum = fig.number # numero de figure en cours ...
+        #
+        aff2D(MdlMoy,Lobs,Cobs,isnumobs,isnanobs,wvmin=wvmin,wvmax=wvmax,fignum=fignum,
+              wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right,
+              noaxes=False,noticks=False,nolabels=True); #...
+        plt.suptitle("MdlMoy(%s) %s(%d-%d) for CT min=%.2f, max=%.2f, moy=%.4f, std=%.3f"%(TmdlnameArr[IMixtMdl],fcodage,andeb,anfin,np.min(MdlMoy),
                      np.max(MdlMoy),np.mean(MdlMoy),np.std(MdlMoy)))
+        if SAVEFIG : # sauvegarde de la figure
+            figfile = "F{:d}_{:s}{:s}Clim-{:d}-{:d}_MdlMoy-for-{:d}-mod".format(fignum,fprefixe,fshortcode,andeb,anfin,len(IMixtMdl))
+            plt.savefig(case_figs_dir+os.sep+figfile)
     #
     # Classification du modèles moyen
-    fig = plt.figure();
+    fig = plt.figure(figsize=(8,6));
+    ax = plt.subplot(111)
     fignum = fig.number
     if PerfGlobIsMean :
-        Perfglob_ = Dgeoclassif(sMapO,MdlMoy,LObs,CObs,isnumObs,globismean=True)
+        Perfglob_ = Dgeoclassif(sMapO,MdlMoy,LObs,CObs,isnumObs,globismean=True,
+                                ax=ax,axoff=False)
     else :
-        Perfglob_ = Dgeoclassif(sMapO,MdlMoy,LObs,CObs,isnumObs);
+        Perfglob_ = Dgeoclassif(sMapO,MdlMoy,LObs,CObs,isnumObs,
+                                ax=ax,axoff=False);
     ##!!?? plt.title("MdlMoy(%s), perf=%.0f%c"%(Tmdlok[IMixtMdl,0],100*Perfglob_,'%'),fontsize=sztitle); #,fontweigth='bold');
     plt.title("MdlMoy(%s), perf=%.0f%c"%(TmdlnameArr[IMixtMdl],100*Perfglob_,'%'),fontsize=sztitle); #,fontweigth='bold');
     #tls.klavier();
+    if SAVEFIG : # sauvegarde de la figure
+        figfile = "F{:d}_{:s}{:s}Clim-{:d}-{:d}_MdlMoy-w{:d}mod".format(fignum,fprefixe,fshortcode,andeb,anfin,len(IMixtMdl))
+        plt.savefig(case_figs_dir+os.sep+figfile)
 #%%-----------------------------------------------------------
 if 1 :
     # Je commence par le plus simple : Une ligne de modèle sans classe en une phase

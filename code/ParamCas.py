@@ -1,7 +1,22 @@
 from   ctObsMdldef import *
 #######################################################################
+# FLAGS DE COMPORTEMENT
+#======================================================================
+#SAVEFIG    = False;
+SAVEFIG    = True;
+#SAVEMAP    = False;
+SAVEMAP    = True;
+# -----------------------------------------------------------------------------
+REWRITEMAP = True;
+#REWRITEMAP = False;
+# -----------------------------------------------------------------------------
+RELOADMAP = True;
+#RELOADMAP = False;
+# -----------------------------------------------------------------------------
+#######################################################################
 # PARAMETRAGE (#1) DU CAS
 #======================================================================
+
 # Choix du jeu de données
 # On doit distinguer les données d'OBS (qui servent à la CT
 # des données modèles à classer en fonction de ces Obs).
@@ -66,8 +81,8 @@ if 1 : # conditions Code Charles: GRANDE ZONE
     NIJ            = 2;
     PerfGlobIsMean = True;
     nb_clust       = 4; # Nombre de cluster
-    #NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
-    NBCOORDAFC4CAH = nb_class; # n premières coordonnées de l'afc à
+    NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
+    #NBCOORDAFC4CAH = nb_class; # n premières coordonnées de l'afc à
                     # utiliser pour faire la CAH (limité à nb_class-1).
 elif 1 : # conditions Code Charles: PETITE ZONE
     # B - Sous-zone ciblant l’upwelling (13x12) :    LON: 16W à 28W LAT : 10N à 23N
@@ -126,18 +141,8 @@ FONDTRANS  = "Obs"; # "Obs"
 #
 # -----------------------------------------------------------------------------
 FIGSDIR    = 'figs'
-#SAVEFIG    = False;
-SAVEFIG    = True;
 # -----------------------------------------------------------------------------
 MAPSDIR    = 'maps'
-#SAVEMAP    = False;
-SAVEMAP    = True;
-# -----------------------------------------------------------------------------
-#REWRITEMAP = True;
-REWRITEMAP = False;
-# -----------------------------------------------------------------------------
-#RELOADMAP = True;
-RELOADMAP = False;
 # -----------------------------------------------------------------------------
 mapfileext = ".pkl" # exten,sion du fichier des MAP
 # -----------------------------------------------------------------------------
