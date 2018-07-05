@@ -106,7 +106,7 @@ def showimgdata(X, Labels=None, n=1, fr=0, interp=None, cmap=cm.jet, nsubl=0,
                 vmin=None, vmax=None, facecolor='w', vnorm=None, sztext=11,
                 figsize=(12,16), wspace=0.1, hspace=0.3, top=0.93, bottom=0.01,
                 left=0.05, right=0.90,x=0.5,y=0.96,noaxes=True,noticks=True,nolabels=True,
-                cbpos='horizontal', fignum=None) :
+                cbpos='horizontal', cblabel=None,fignum=None) :
     import matplotlib.colorbar as cb
     from matplotlib.colors import LogNorm
     nbsubl, nbsubc = nsublc(n,nsubl)
@@ -134,9 +134,9 @@ def showimgdata(X, Labels=None, n=1, fr=0, interp=None, cmap=cm.jet, nsubl=0,
     #
     # VISU
     if vmin is None :
-        vmin = np.min(X);
+        vmin = np.nanmin(X);
     if vmax is None :
-        vmax = np.max(X);
+        vmax = np.nanmax(X);
     print(" -- subplots({}x{}) ...".format(nbsubl,nbsubc))
     M, P, Q = np.shape(X[0]);
     fig, axes = plt.subplots(nrows=nbsubl, ncols=nbsubc, num=fignum,
@@ -178,6 +178,11 @@ def showimgdata(X, Labels=None, n=1, fr=0, interp=None, cmap=cm.jet, nsubl=0,
         cbar_ax,kw = cb.make_axes([ax for ax in axes.flat],orientation="vertical",
                                  fraction=0.05,pad=0.02,aspect=30)
     fig.colorbar(ims, cax=cbar_ax, **kw);
+    if cblabel is not None :
+        if cbpos == 'horizontal':
+            cbar_ax.set_xlabel(cblabel)
+        else :
+            cbar_ax.set_ylabel(cblabel)
 
 #----------------------------------------------------------------------    
 def fit01(X,fullret=False,gap01=0.0) :

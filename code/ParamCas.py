@@ -2,10 +2,11 @@ from   ctObsMdldef import *
 #######################################################################
 # FLAGS DE COMPORTEMENT
 #======================================================================
-#SAVEFIG    = False;
 SAVEFIG    = True;
-#SAVEMAP    = False;
+#SAVEFIG    = False;
+# -----------------------------------------------------------------------------
 SAVEMAP    = True;
+#SAVEMAP    = False;
 # -----------------------------------------------------------------------------
 #REWRITEMAP = True;
 REWRITEMAP = False;
@@ -80,9 +81,10 @@ if 1 : # conditions Code Charles: GRANDE ZONE
     nb_class       = 7; #6, 7, 8  # Nombre de classes retenu
     # et CAH for cluster with AFC
     NIJ            = 2;
-    #PerfGlobIsMean = True;
-    PerfGlobIsMean = False;
-    nb_clust       = 4; # Nombre de cluster
+    PerfGlobIsMean = True;
+    #PerfGlobIsMean = False;
+    #nb_clust       = 4; # Nombre de cluster
+    nb_clust       = 6; # Nombre de cluster
     NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
     #NBCOORDAFC4CAH = nb_class; # n premières coordonnées de l'afc à
                     # utiliser pour faire la CAH (limité à nb_class-1).
@@ -96,8 +98,8 @@ elif 1 : # conditions Code Charles: PETITE ZONE
     nb_class       = 4; #6, 7, 8  # Nombre de classes retenu
     # et CAH for cluster with AFC
     NIJ            = 2;
-    #PerfGlobIsMean = True;
-    PerfGlobIsMean = False;
+    PerfGlobIsMean = True;
+    #PerfGlobIsMean = False;
     nb_clust       = 5; # Nombre de cluster
     NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
 else : # valeurs par defaut

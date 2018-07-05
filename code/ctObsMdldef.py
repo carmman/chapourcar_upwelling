@@ -158,13 +158,13 @@ def Dpixmoymens(data,visu=None, climato=None) :
 
 def aff2D(XD,L,C,isnum,isnan,varnames=None,wvmin=None,wvmax=None,fignum=None,figsize=(9,9),
           cbpos='vertical', wspace=0.01, hspace=0.01, top=0.93, bottom=0.10,
-          left=0.05, right=0.98,x=0.5,y=0.96,noaxes=True,noticks=True,nolabels=True) :
+          left=0.05, right=0.98,x=0.5,y=0.96,noaxes=True,noticks=True,nolabels=True,cblabel=None) :
     ND,p      = np.shape(XD);
     X_        = np.empty((L*C,p));   
     X_[isnum] = XD   
     X_[isnan] = np.nan
     showimgdata(X_.T.reshape(p,1,L,C),n=p,fr=0,Labels=varnames,interp='none',
-                cmap=cm.gist_ncar,fignum=fignum,figsize=figsize,cbpos=cbpos,
+                cmap=cm.gist_ncar,fignum=fignum,figsize=figsize,cbpos=cbpos,cblabel=cblabel,
                 wspace=wspace, hspace=hspace, top=top, bottom=bottom,
                 left=left, right=right,x=x,y=y,noaxes=noaxes,noticks=noticks,nolabels=nolabels,
                 vmin=wvmin,vmax=wvmax);

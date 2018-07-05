@@ -556,17 +556,20 @@ if 1 : # Visu (et sauvegarde éventuelle de la figure) des données telles
         figsize=(10,8)
     fig = plt.figure(figsize=figsize,facecolor='w')
     fignum = fig.number # numero de figure en cours ...
-    wspace=0.02; hspace=0.02; top=0.92; bottom=0.02; left=0.02; right=0.98;
+    wspace=0.02; hspace=0.02; top=0.92; bottom=0.02; left=0.02; right=0.97;
     #plt.subplots_adjust(wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right)
+    cbClimLabel = "%s%s) [min=%.2f, max=%.2f, moy=%.4f, std=%.3f]"%(fcodage,"SST",
+                    minDobs,maxDobs,moyDobs,stdDobs)
     if climato != "GRAD" :
         aff2D(Dobs,Lobs,Cobs,isnumobs,isnanobs,wvmin=wvmin,wvmax=wvmax,fignum=fignum,
               wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right,
-              noaxes=False,noticks=False,nolabels=True); #...
+              noaxes=False,noticks=False,nolabels=True,cblabel=cbClimLabel); #...
     else :
         aff2D(Dobs,Lobs,Cobs,isnumobs,isnanobs,wvmin=0.0,wvmax=0.042,fignum=fignum,
-              wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right); #...
-    plt.suptitle("%sSST Climatologie %d-%d). Obs for CT [%s]\nmin=%f, max=%f, moy=%f, std=%f"
-                 %(fcodage,andeb,anfin,data_label_base,minDobs,maxDobs,moyDobs,stdDobs));
+              wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right,
+              cblabel=cbClimLabel); #...
+    plt.suptitle("%sSST Climatologie %d-%d) - Observations for CT [%s]"
+                 %(fcodage,andeb,anfin,data_label_base));
     if SAVEFIG : # sauvegarde de la figure
         figfile = "F{:d}_{:s}{:s}Clim-{:d}-{:d}_{:s}".format(fignum,fprefixe,fshortcode,andeb,anfin,data_label_base)
         plt.savefig(case_figs_dir+os.sep+figfile)
@@ -635,7 +638,7 @@ if DO_NEXT :
     print("Two phases training executed:")
     print(" - Phase 1: {0[0]} epochs for radius variing from {0[1]} to {0[2]}".format(Parm_app))
     print(" - Phase 2: {0[3]} epochs for radius variing from {0[4]} to {0[5]}".format(Parm_app))
-    print("Obs case: {}\n          date ... {}]\n          tseed={} ... qerr={:8.6f} ... terr={:.4f}".format(case_label,
+    print("Obs case: {}\n          date ... {}]\n          tseed={} ... Qerr={:8.6f} ... Terr={:.4f}".format(case_label,
           casetimelabel,tseed,qerr,etO))
     if SAVEMAP : # sauvegarde de la Map de SOM
         printwarning([ "==> Saving MAP in file :",
@@ -662,7 +665,7 @@ elif os.path.exists(mapPathAndFile) and RELOADMAP :
         bmus2O = ctk.mbmus (sMapO, Data=None, narg=2);
         etO    = ctk.errtopo(sMapO, bmus2O); # dans le cas 'rect' uniquement
         #print("Obs, erreur topologique = %.4f" %etO)
-        print("Obs case: {}\n          loaded sMap date ... {}]\n          used tseed={} ... qerr={:8.6f} ... terr={:.4f}".format(case_label,
+        print("Obs case: {}\n          loaded sMap date ... {}]\n          used tseed={} ... Qerr={:8.6f} ... Terr={:.4f}".format(case_label,
               somtimelabel,tseed,qerr,etO))
 else :
     try :
@@ -773,6 +776,7 @@ if 1 :
         if SAVEFIG :
             figfile += "Left-CAH-dendrogram"
     del R_ # L_
+    figfile += "_{:d}-classes".format(nb_class)
     plt.title("CAH: SAM codebook dendrogram [%s]\nMétho=%s, dist=%s, nb_class=%d"
               %(case_label,method_cah, dist_cah,nb_class), fontsize=18)
     if SAVEFIG :
@@ -1046,7 +1050,7 @@ for imodel in np.arange(Nmodels) :
     # Calcul de la perf glob du modèle et stockage pour tri
     bmusM       = ctk.mbmus (sMapO, Data=Dmdl);
     classe_DMdl = class_ref[bmusM].reshape(NDmdl);
-    if globismean :
+    if PerfGlobIsMean :
         _, _, perfglob = perfbyclass(classe_Dobs,classe_DMdl,nb_class,globismean=True);
     else:
         _, _, perfglob = perfbyclass(classe_Dobs,classe_DMdl,nb_class);
@@ -1465,7 +1469,8 @@ if 1 : # Tableau des performances en figure de courbes
 #<:::
 #
 #
-raise Exception("*** ARRET MANUEL D'EXECUTION ***")
+if 0 :
+    raise Exception("*** ARRET MANUEL D'EXECUTION ***")
 #%% ===================================================================
 # -----------------------------------------------------------------------
 fig200=plt.figure(200,figsize=(2,1),facecolor='r');
@@ -1614,6 +1619,7 @@ if NIJ > 0 :
             if SAVEFIG :
                 figfile += "Left-AFC-dendrogram"
         del R_ # L_
+        figfile += "_{:d}-clust".format(nb_clust)
         plt.title("AFC: Coord(%s) dendrogram [%s]\nMétho=%s, dist=%s, nb_clust=%d"
                   %((coord2take+1).astype(str),case_label,metho_,dist_,nb_clust), fontsize=16)
         if SAVEFIG :
@@ -1703,7 +1709,7 @@ if NIJ > 0 : # A.F.C Clusters
                           len(iclust),100*Perfglob_,np.array(lignames)[iclust])); ##!!??
         plt.suptitle("AFC Clusters - [{}]".format(case_label),fontsize=18)
         if SAVEFIG :
-            figfile = "F{:d}_{:s}{:s}_{:s}_{:d}cl_AFC-Clusters-{:d}cl".format(figclustmoynum,fprefixe,SIZE_REDUCTION,fshortcode,nb_class,nb_clust)
+            figfile = "F{:d}_{:s}{:s}_{:s}_{:d}cl_AFC-Clusters-{:d}-clust".format(figclustmoynum,fprefixe,SIZE_REDUCTION,fshortcode,nb_class,nb_clust)
             plt.savefig(case_figs_dir+os.sep+figfile)
         # FIN de la boucle sur le nombre de cluster
         #del Z_
@@ -1794,7 +1800,7 @@ if NIJ > 0 : # A.F.C
         plt.plot(F1sU[0,0],F1sU[0,1], 'oc', markersize=20,
                      markerfacecolor='none',markeredgecolor='m',markeredgewidth=2);
     if SAVEFIG :
-        figfile = "F{:d}_{:s}{:s}_{:s}_{:d}cl_AFC-Nuage-{:d}cl".format(fignum,fprefixe,SIZE_REDUCTION,fshortcode,nb_class,nb_clust)
+        figfile = "F{:d}_{:s}{:s}_{:s}_{:d}cl_AFC-Nuage-{:d}-clust".format(fignum,fprefixe,SIZE_REDUCTION,fshortcode,nb_class,nb_clust)
         plt.savefig(case_figs_dir+os.sep+figfile)
 #%%        
 if NIJ > 0 : # A.F.C
@@ -1854,7 +1860,7 @@ if NIJ > 0 : # A.F.C
                     print('\''+Tmodels[iord[i],0],end='\',');
             del F1U_
         if SAVEFIG :
-            figfile = "F{:d}_{:s}{:s}_{:s}_{:d}cl_AFC-Nuage+Classes-{:d}cl".format(fignum,fprefixe,SIZE_REDUCTION,fshortcode,nb_class,nb_clust)
+            figfile = "F{:d}_{:s}{:s}_{:s}_{:d}cl_AFC-Nuage+Classes-{:d}-clust".format(fignum,fprefixe,SIZE_REDUCTION,fshortcode,nb_class,nb_clust)
             plt.savefig(case_figs_dir+os.sep+figfile)
             plt.savefig(case_figs_dir+os.sep+figfile+".eps")
 #
@@ -1872,7 +1878,7 @@ if NIJ > 0 : # A.F.C
             plt.title("%sSST(%s)) [%s]\n%s%d AFC on good classes of Completed Models (vs Obs)" \
                      %(fcodage,DATAMDL,case_label,method_cah,nb_class));
         if SAVEFIG :
-            figfile = "F{:d}_{:s}{:s}_{:s}_{:d}cl_AFC-Inertie-{:d}cl".format(fignum,fprefixe,SIZE_REDUCTION,fshortcode,nb_class,nb_clust)
+            figfile = "F{:d}_{:s}{:s}_{:s}_{:d}cl_AFC-Inertie-{:d}-clust".format(fignum,fprefixe,SIZE_REDUCTION,fshortcode,nb_class,nb_clust)
             plt.savefig(case_figs_dir+os.sep+figfile)
     #
     if 0 : # Contributions Absolues lignes (déjà calculé)
@@ -1947,13 +1953,16 @@ def mixtgeneralisation (TMixtMdl) :
         elif SIZE_REDUCTION == 'sel' :
             figsize=(10,8)
         fig = plt.figure(figsize=figsize,facecolor='w')
+        wspace=0.02; hspace=0.02; top=0.92; bottom=0.02; left=0.02; right=0.97;
         fignum = fig.number # numero de figure en cours ...
         #
+        sttle_lim_label = "mn=%.2f, mx=%.2f, my=%.4f, std=%.3f"%(np.min(MdlMoy),
+                     np.max(MdlMoy),np.mean(MdlMoy),np.std(MdlMoy))
         aff2D(MdlMoy,Lobs,Cobs,isnumobs,isnanobs,wvmin=wvmin,wvmax=wvmax,fignum=fignum,
               wspace=wspace,hspace=hspace,top=top,bottom=bottom,left=left,right=right,
-              noaxes=False,noticks=False,nolabels=True); #...
-        plt.suptitle("MdlMoy(%s) %s(%d-%d) for CT min=%.2f, max=%.2f, moy=%.4f, std=%.3f"%(TmdlnameArr[IMixtMdl],fcodage,andeb,anfin,np.min(MdlMoy),
-                     np.max(MdlMoy),np.mean(MdlMoy),np.std(MdlMoy)))
+              noaxes=False,noticks=False,nolabels=True,cblabel=cbClimLabel); #...
+        plt.suptitle("MdlMoy cluster with %s - %s(%d-%d) for CT [%s]"%(TmdlnameArr[IMixtMdl],
+                     fcodage,andeb,anfin,sttle_lim_label))
         if SAVEFIG : # sauvegarde de la figure
             figfile = "F{:d}_{:s}{:s}Clim-{:d}-{:d}_MdlMoy-for-{:d}-mod".format(fignum,fprefixe,fshortcode,andeb,anfin,len(IMixtMdl))
             plt.savefig(case_figs_dir+os.sep+figfile)
