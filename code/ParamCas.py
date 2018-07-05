@@ -7,8 +7,8 @@ SAVEFIG    = True;
 #SAVEMAP    = False;
 SAVEMAP    = True;
 # -----------------------------------------------------------------------------
-REWRITEMAP = True;
-#REWRITEMAP = False;
+#REWRITEMAP = True;
+REWRITEMAP = False;
 # -----------------------------------------------------------------------------
 RELOADMAP = True;
 #RELOADMAP = False;
@@ -75,11 +75,13 @@ if 1 : # conditions Code Charles: GRANDE ZONE
     #   Nb_classe = 7
     nbl            = 30;  nbc =  4;  # Taille de la carte
     Parm_app       = ( 5, 5., 1.,  16, 1., 0.1); # Température ini, fin, nb_it
+    #Parm_app       = ( 50, 5., 1.,  160, 1., 0.1); # Température ini, fin, nb_it
     SIZE_REDUCTION = 'All';
     nb_class       = 7; #6, 7, 8  # Nombre de classes retenu
     # et CAH for cluster with AFC
     NIJ            = 2;
-    PerfGlobIsMean = True;
+    #PerfGlobIsMean = True;
+    PerfGlobIsMean = False;
     nb_clust       = 4; # Nombre de cluster
     NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
     #NBCOORDAFC4CAH = nb_class; # n premières coordonnées de l'afc à
@@ -94,7 +96,8 @@ elif 1 : # conditions Code Charles: PETITE ZONE
     nb_class       = 4; #6, 7, 8  # Nombre de classes retenu
     # et CAH for cluster with AFC
     NIJ            = 2;
-    PerfGlobIsMean = True;
+    #PerfGlobIsMean = True;
+    PerfGlobIsMean = False;
     nb_clust       = 5; # Nombre de cluster
     NBCOORDAFC4CAH = nb_class - 1; # n premières coordonnées de l'afc à
 else : # valeurs par defaut

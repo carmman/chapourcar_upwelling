@@ -315,15 +315,15 @@ def plot_classes(sMapO,sst_obs,Dobs,NDobs,listofclasses):
         #
         im = ax.imshow(XC_Ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class_tmp);
         ax_divider = make_axes_locatable(ax)
-        cax = ax_divider.append_axes("right", size="4%", pad="1%")
+        cax = ax_divider.append_axes("right", size="6%", pad="3%")
         hcb = plt.colorbar(im,cax=cax,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
         hcb.set_ticklabels(coches);
-        hcb.ax.tick_params(labelsize=8);
+        hcb.ax.tick_params(labelsize=12);
         plt.sca(ax)
         #        hcb    = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
         #        hcb.set_ticklabels(coches);
         #        hcb.ax.tick_params(labelsize=8)
-        plt.title("{} classes".format(nb_class_tmp),fontsize=14)
+        plt.title("{} classes".format(nb_class_tmp),fontsize=16)
         if SIZE_REDUCTION == 'All' :
             lolast = 4
         else :
@@ -358,27 +358,40 @@ def printwarning(msg, msg2=None, msg3=None):
 #%% ###################################################################
 # INITIALISATION
 # Des trucs qui pourront servir
-#======================================================================
-plt.rcParams.update({'figure.max_open_warning': 0})
-#
-casetime=datetime.now()
-casetimelabel = casetime.strftime("%d %b %Y @ %H:%M:%S")
-casetimeTlabel = casetime.strftime("%Y%m%dT%H%M%S")
-#
-tpgm0 = time();
-plt.ion()
-#
 #######################################################################
 # eface toutes les fenetres de figures en cours
 plt.close('all')
+#======================================================================
+# Pour initialiser le generateur de nombres aleatoires:
+# (si tseed est diff de 0 alors il est ajouté dans le nom du cas)
+tseed = 0;
+#tseed = 9;
+#tseed = np.long(time());
+#tseed = np.long(np.mod(time()*1e6,1e3)); # un chiffre aleatoire entre 0 et 999
+#======================================================================
+plt.rcParams.update({'figure.max_open_warning': 0})
+#======================================================================
+casetime=datetime.now()
+casetimelabel = casetime.strftime("%d %b %Y @ %H:%M:%S")
+casetimeTlabel = casetime.strftime("%Y%m%dT%H%M%S")
+#======================================================================
+tpgm0 = time();  # returns the time as a floating point number expressed in seconds since the epoch, in UTC
+plt.ion()        # Turn interactive mode on
+#======================================================================
+
 #######################################################################
 # PARAMETRAGE (#1) DU CAS
 from ParamCas import *
 
 varnames = np.array(["JAN","FEV","MAR","AVR","MAI","JUI",
-                    "JUI","AOU","SEP","OCT","NOV","DEC"]);
+                     "JUI","AOU","SEP","OCT","NOV","DEC"]);
 
-print("Initial case label: {}\n".format(case_label_base))
+if tseed == 0:
+    case_name_base = case_label_base
+else:
+    case_name_base = "{:s}_s{:03d}".format(case_label_base,tseed)
+#
+print("Initial case label: {}\n".format(case_name_base))
 
 # print(os.path.exists("/home/el/myfile.txt"))
 
@@ -457,7 +470,7 @@ elif DATAOBS == "rcp_2006_2017" :
 if lon[0] > 180 : # ATTENTION, on considere tous > 180 ... ou pas
     lon -= 360
 #
-case_label = case_label_base+"_"+data_label_base
+case_label = case_name_base+"_"+data_label_base
 print("case label with data version: {}\n".format(case_label))
 
 # Repertoire principal des maps (les objets des SOM) et sous-repertoire por le cas en cours 
@@ -576,9 +589,6 @@ if 1 : # Visu (et sauvegarde éventuelle de la figure) des données telles
 ##########################################################################
 #                       Carte Topologique
 #=========================================================================
-tseed = 0;
-#tseed = 9;
-#tseed = np.long(time());
 DO_NEXT = True
 if SAVEMAP : # SI sauvegarde de la Map de SOM est ACTIVE
     mapfile = "Map_{:s}{:s}Clim-{:d}-{:d}_{:s}_ts-{}{}".format(fprefixe,fshortcode,
@@ -591,7 +601,8 @@ if SAVEMAP : # SI sauvegarde de la Map de SOM est ACTIVE
                      u"Activez REWRITEMAP pour reecrire.")
         DO_NEXT = False
 if DO_NEXT :
-    print("tseed=",tseed); np.random.seed(tseed);
+    print("Initializing random generator with seed={}".format(tseed))
+    np.random.seed(tseed);
     #----------------------------------------------------------------------
     # Création de la structure de la carte_______________
     norm_method = 'data'; # je n'utilise pas 'var' mais je fais centred à
@@ -640,8 +651,8 @@ elif os.path.exists(mapPathAndFile) and RELOADMAP :
         map_f = open(mapPathAndFile, 'rb')
         map_d = pickle.load(map_f)
         map_f.close()
-        sMapO = map_d['map']
-        tseed = map_d['tseed'] # seed used whent initializing sMapO, originally
+        sMapO   = map_d['map']
+        tseed   = map_d['tseed'] # seed used whent initializing sMapO, originally
         somtime = map_d['somtime'] # seed used whent initializing sMapO, originally
         somtimelabel = somtime.strftime("%d %b %Y @ %H:%M:%S")
         somtimeTlabel = somtime.strftime("%Y%m%dT%H%M%S")
@@ -652,7 +663,7 @@ elif os.path.exists(mapPathAndFile) and RELOADMAP :
         etO    = ctk.errtopo(sMapO, bmus2O); # dans le cas 'rect' uniquement
         #print("Obs, erreur topologique = %.4f" %etO)
         print("Obs case: {}\n          loaded sMap date ... {}]\n          used tseed={} ... qerr={:8.6f} ... terr={:.4f}".format(case_label,
-              sometimelabel,tseed,qerr,etO))
+              somtimelabel,tseed,qerr,etO))
 else :
     try :
         # un print utilisant sMapO, s'il nexiste pas declanche une exeption !
@@ -814,6 +825,7 @@ if True :
     # Figure par clases de la zone geographique, pour plussieurs valeurs de nombre de classes
     list_of_classes_to_show = [4,5,6,7,8,9]
     fig = plt.figure(figsize=(12,7.5));
+    plt.subplots_adjust(wspace=0.02, hspace=0.02, top=0.90, bottom=0.12, left=0.02, right=0.98)
     fignum = fig.number
     plot_classes(sMapO,sst_obs,Dobs,NDobs,list_of_classes_to_show)
     plt.tight_layout(rect=[0, 0, 1, 0.94])
@@ -826,14 +838,16 @@ if True :
 if 1 : # for Obs
     # Figure par clases de la zone geographique, uniquement pour le nombre de classes choisie
     fig = plt.figure(figsize=(8,6));
+    plt.subplots_adjust(wspace=0.0, hspace=0.0, top=0.90, bottom=0.12, left=0.08, right=0.94)
     fignum = fig.number
     ax = plt.subplot(111)
     im = ax.imshow(XC_ogeo, interpolation='none',cmap=ccmap,vmin=1,vmax=nb_class);
     ax_divider = make_axes_locatable(ax)
-    cax = ax_divider.append_axes("right", size="4%", pad="1%")
+    cax = ax_divider.append_axes("right", size="6%", pad="3%")
     hcb = plt.colorbar(im,cax=cax,ax=ax,ticks=ticks,boundaries=bounds,values=bounds);
     hcb.set_ticklabels(coches);
-    hcb.ax.tick_params(labelsize=8);
+    hcb.ax.tick_params(labelsize=14);
+    hcb.ax.set_ylabel('classe',size=14)
     plt.sca(ax)
     #hcb    = plt.colorbar(ticks=ticks,boundaries=bounds,values=bounds);
     #hcb.set_ticklabels(coches);
@@ -845,13 +859,15 @@ if 1 : # for Obs
     else :
         lolast = 2
     if 0 :
-        plt.xticks(np.arange(0,Cobs,lolast), lon[np.arange(0,Cobs,lolast)], rotation=45, fontsize=10)
-        plt.yticks(np.arange(0,Lobs,lolast), lat[np.arange(0,Lobs,lolast)], fontsize=10)
+        plt.xticks(np.arange(0,Cobs,lolast), lon[np.arange(0,Cobs,lolast)], rotation=45, fontsize=12)
+        plt.yticks(np.arange(0,Lobs,lolast), lat[np.arange(0,Lobs,lolast)], fontsize=12)
     else :
-        plt.xticks(np.arange(-0.5,Cobs,lolast), np.round(lon[np.arange(0,Cobs,lolast)]).astype(int), rotation=45, fontsize=10)
-        plt.yticks(np.arange(0.5,Lobs,lolast), np.round(lat[np.arange(0,Lobs,lolast)]).astype(int), fontsize=10)
+        plt.xticks(np.arange(-0.5,Cobs,lolast), np.round(lon[np.arange(0,Cobs,lolast)]).astype(int), rotation=45, fontsize=14)
+        plt.yticks(np.arange(0.5,Lobs,lolast), np.round(lat[np.arange(0,Lobs,lolast)]).astype(int), fontsize=14)
     #grid(); # for easier check
     #plt.show(); sys.exit(0)
+    plt.xlabel('longitude', fontsize=14)
+    plt.ylabel('latitude', fontsize=14)
     if SAVEFIG :
         #plt.savefig(case_figs_dir+os.sep+"%s%s%dMdlvsObstrans"%(fshortcode,method_cah,nb_class))
         plt.savefig(case_figs_dir+os.sep+"F{:d}_{}{}_{}_Obs-{:d}-Classes".format(fignum,
@@ -909,10 +925,11 @@ Tmodels = Tmodels_anyall;
 #Tmodels= Tmodels[0:5]; # Pour limiter le nombre de modèles en phase de mise au point
 Nmodels = len(Tmodels); # print(Nmodels); sys.exit(0)
 # For (sub)plot by modele
-nsub   = 49; # actuellement au plus 48 modèles + 1 pour les obs.      
+nsub   = Nmodels + 1  # tous les modèles + 1 pour les obs.
+#nsub   = 49; # actuellement au plus 48 modèles + 1 pour les obs.      
 #nsub  = 9;  # Pour Michel (8+1pour les obs)     
-nbsubc = np.ceil(np.sqrt(nsub));
-nbsubl = np.ceil(1.0*nsub/nbsubc);
+nbsubc = np.ceil(np.sqrt(nsub));    # nombre de colonnes pour graphique d'affichage
+nbsubl = np.ceil(1.0*nsub/nbsubc);  # nombre de lignes pour affichage
 isubplot=0;
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 min_moymensclass = 999999.999999; # sert pour avoir tous les ...
@@ -920,15 +937,15 @@ max_moymensclass = 000000.000000; # ... subplots à la même échelles
 TypePerf         = ["AccuracyPrecision"]; #,"Index2Rand"];
 Tperfglob        = np.zeros((Nmodels,len(TypePerf))); # Tableau des Perf globales des modèles
 if NIJ==1 :
-    TNIJ         = [];  
-TTperf           = [];  
+    TNIJ         = [];
+TTperf           = [];
 #
 TDmdl4CT         = []; # Stockage des modèles 4CT pour AFC-CAH ...  
 #
 Tmdlok           = []; # Pour construire une table des modèles valides
-Nmdlok           = 0;  # Pour si y'a cumul ainsi connaitre l'indice de modèle valide 
+Nmdlok           = 0;  # Pour si y'a cumul ainsi connaitre l'indice de modèle valide
                        # courant, puis au final, le nombre de modèles valides
-                       # quoique ca dependra aussi que SUMi(Ni.) soit > 0                   
+                       # quoique ca dependra aussi que SUMi(Ni.) soit > 0
 Tperfglob4Sort   = []; #!!??
 Tclasse_DMdl     = []; #!!??
 Tmdlname         = []; #!!??
@@ -942,6 +959,7 @@ Tmoymensclass    = []; #!!??
 #OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
 print("ooooooooooooooooooooooooooooo first loop ooooooooooooooooooooooooooooo")
 for imodel in np.arange(Nmodels) :
+    # imodel = 0
     mdlname = Tmodels[imodel,0]; print(mdlname)
     anstart = Tmodels[imodel,1]; # (utile pour rmean seulement)
     #________________________________________________
@@ -1028,7 +1046,11 @@ for imodel in np.arange(Nmodels) :
     # Calcul de la perf glob du modèle et stockage pour tri
     bmusM       = ctk.mbmus (sMapO, Data=Dmdl);
     classe_DMdl = class_ref[bmusM].reshape(NDmdl);
-    perfglob    = len(np.where(classe_DMdl==classe_Dobs)[0])/NDobs
+    if globismean :
+        _, _, perfglob = perfbyclass(classe_Dobs,classe_DMdl,nb_class,globismean=True);
+    else:
+        _, _, perfglob = perfbyclass(classe_Dobs,classe_DMdl,nb_class);
+        #perfglob    = len(np.where(classe_DMdl==classe_Dobs)[0])/NDobs
     #print("perfglob: {}".format(perfglob))
     Tperfglob4Sort.append(perfglob)
     Tclasse_DMdl.append(classe_DMdl)
@@ -1425,7 +1447,12 @@ if 1 : # Tableau des performances en figure de courbes
     plt.plot(100*Tperfglob_Qm,'.-r');
     plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.93, bottom=0.15, left=0.05, right=0.98)
     fignum = fig.number
-    plt.axis("tight"); plt.grid(axis='both')
+    if 1:
+        lax=plt.axis()
+        plt.axis([lax[0],lax[1],0,100]); # axis fixex pour l'affichage d'un pourcentage
+    else :
+        plt.axis("tight");
+    plt.grid(axis='both')
     plt.xticks(np.arange(Nmodels),Tmdlname, fontsize=8, rotation=45,
                horizontalalignment='right', verticalalignment='baseline');
     #          horizontalalignment='right', verticalalignment='center');
@@ -1438,6 +1465,7 @@ if 1 : # Tableau des performances en figure de courbes
 #<:::
 #
 #
+raise Exception("*** ARRET MANUEL D'EXECUTION ***")
 #%% ===================================================================
 # -----------------------------------------------------------------------
 fig200=plt.figure(200,figsize=(2,1),facecolor='r');
