@@ -835,7 +835,7 @@ if True :
     plt.tight_layout(rect=[0, 0, 1, 0.94])
     if SAVEFIG :
         #plt.savefig(case_figs_dir+os.sep+"%s%s%dMdlvsObstrans"%(fshortcode,method_cah,nb_class))
-        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}{}_{}_ObsShow-{:d}-{:d}-Classes".format(fignum,
+        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}{}_{}_ObsShow_{:d}-to-{:d}-classes".format(fignum,
                     fprefixe,SIZE_REDUCTION,fshortcode,
                     list_of_classes_to_show[0],list_of_classes_to_show[-1]))
 
@@ -874,7 +874,7 @@ if 1 : # for Obs
     plt.ylabel('latitude', fontsize=14)
     if SAVEFIG :
         #plt.savefig(case_figs_dir+os.sep+"%s%s%dMdlvsObstrans"%(fshortcode,method_cah,nb_class))
-        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}{}_{}_Obs-{:d}-Classes".format(fignum,
+        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}{}_{}_Obs-{:d}-classes".format(fignum,
                     fprefixe,SIZE_REDUCTION,fshortcode,nb_class))
 #
 if 0 : # for obs
@@ -892,7 +892,7 @@ if 0 : # for obs
     #plt.show(); sys.exit(0)
     if SAVEFIG :
         #plt.savefig(case_figs_dir+os.sep+"%s%s%dMdlvsObstrans"%(fshortcode,method_cah,nb_class))
-        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}{}_{}_ObsMoyMensByClass-{:d}-Classes".format(fignum,
+        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}{}_{}_ObsMoyMensByClass-{:d}-classes".format(fignum,
                     fprefixe,SIZE_REDUCTION,fshortcode,nb_class))
 #
 if 0 :
@@ -909,7 +909,7 @@ if 0 :
     #plt.show(); sys.exit(0)
     if SAVEFIG :
         #plt.savefig(case_figs_dir+os.sep+"%s%s%dMdlvsObstrans"%(fshortcode,method_cah,nb_class))
-        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}{}_{}_ObsMoyMensByClassByRef-{:d}-Classes".format(fignum,
+        plt.savefig(case_figs_dir+os.sep+"F{:d}_{}{}_{}_ObsMoyMensByClassByRef-{:d}-classes".format(fignum,
                     fprefixe,SIZE_REDUCTION,fshortcode,nb_class))
 #
 #######################################################################
