@@ -332,8 +332,8 @@ def plot_classes(sMapO,sst_obs,Dobs,NDobs,listofclasses):
             plt.xticks(np.arange(0,Cobs,lolast), lon[np.arange(0,Cobs,lolast)], rotation=45, fontsize=10)
             plt.yticks(np.arange(0,Lobs,lolast), lat[np.arange(0,Lobs,lolast)], fontsize=10)
         else :
-            plt.xticks(np.arange(-0.5,Cobs,lolast), np.round(lon[np.arange(0,Cobs,lolast)]).astype(int), rotation=45, fontsize=10)
-            plt.yticks(np.arange(0.5,Lobs,lolast), np.round(lat[np.arange(0,Lobs,lolast)]).astype(int), fontsize=10)
+            plt.xticks(np.arange(0.5,Cobs,lolast), np.round(lon[np.arange(0,Cobs,lolast)]).astype(int), rotation=45, fontsize=10)
+            plt.yticks(np.arange(-0.5,Lobs,lolast), np.round(lat[np.arange(0,Lobs,lolast)]).astype(int), fontsize=10)
         #grid(); # for easier check
     plt.suptitle("obs, classe géog., Method %s [%s]"%(method_cah,case_label),fontsize=18); #,fontweigth='bold');
     #plt.show(); sys.exit(0)
@@ -866,8 +866,8 @@ if 1 : # for Obs
         plt.xticks(np.arange(0,Cobs,lolast), lon[np.arange(0,Cobs,lolast)], rotation=45, fontsize=12)
         plt.yticks(np.arange(0,Lobs,lolast), lat[np.arange(0,Lobs,lolast)], fontsize=12)
     else :
-        plt.xticks(np.arange(-0.5,Cobs,lolast), np.round(lon[np.arange(0,Cobs,lolast)]).astype(int), rotation=45, fontsize=14)
-        plt.yticks(np.arange(0.5,Lobs,lolast), np.round(lat[np.arange(0,Lobs,lolast)]).astype(int), fontsize=14)
+        plt.xticks(np.arange(0.5,Cobs,lolast), np.round(lon[np.arange(0,Cobs,lolast)]).astype(int), rotation=45, fontsize=14)
+        plt.yticks(np.arange(-0.5,Lobs,lolast), np.round(lat[np.arange(0,Lobs,lolast)]).astype(int), fontsize=14)
     #grid(); # for easier check
     #plt.show(); sys.exit(0)
     plt.xlabel('longitude', fontsize=14)
@@ -1306,8 +1306,12 @@ if OK104 : # Obs for 104
     hcb.set_ticklabels(coches);
     hcb.ax.tick_params(labelsize=8)
     plt.title("Obs, %d classes "%(nb_class),fontsize=sztitle);
-    plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
-    plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
+    if 0 :
+        plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
+        plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
+    else :
+        plt.xticks(np.arange(0.5,Cobs,4), np.round(lon[np.arange(0,Cobs,4)]).astype(int), rotation=45, fontsize=8)
+        plt.yticks(np.arange(-0.5,Lobs,4), np.round(lat[np.arange(0,Lobs,4)]).astype(int), fontsize=8)
     #grid(); # for easier check
     plt.suptitle(suptitle104)
     if SAVEFIG :
@@ -1322,8 +1326,12 @@ if OK105 : # Obs for 105
     hcb.set_ticklabels(coches);
     hcb.ax.tick_params(labelsize=8)
     plt.title("Obs, %d classes "%(nb_class),fontsize=sztitle);
-    plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
-    plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
+    if 0 :
+        plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
+        plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
+    else :
+        plt.xticks(np.arange(0.5,Cobs,4), np.round(lon[np.arange(0,Cobs,4)]).astype(int), rotation=45, fontsize=8)
+        plt.yticks(np.arange(-0.5,Lobs,4), np.round(lat[np.arange(0,Lobs,4)]).astype(int), fontsize=8)
     #grid(); # for easier check
     plt.suptitle(suptitle105)
     if SAVEFIG :
@@ -1391,8 +1399,12 @@ if OK108 : # idem OK105, but ...
     hcb.set_ticklabels(coches);
     hcb.ax.tick_params(labelsize=8)
     plt.title("Obs, %d classes "%(nb_class),fontsize=sztitle);
-    plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
-    plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
+    if 0 :
+        plt.xticks(np.arange(0,Cobs,4), lon[np.arange(0,Cobs,4)], rotation=45, fontsize=8)
+        plt.yticks(np.arange(0,Lobs,4), lat[np.arange(0,Lobs,4)], fontsize=8)
+    else :
+        plt.xticks(np.arange(0.5,Cobs,4), np.round(lon[np.arange(0,Cobs,4)]).astype(int), rotation=45, fontsize=8)
+        plt.yticks(np.arange(-0.5,Lobs,4), np.round(lat[np.arange(0,Lobs,4)]).astype(int), fontsize=8)
     #grid(); # for easier check
     plt.suptitle(suptitle108);
     if SAVEFIG :
@@ -1519,6 +1531,7 @@ if NIJ > 0 :  # A.F.C
             # Obs have 100% for any class par définition
             pobs_ = (np.ones(nb_class)*100).astype(int);
             Tp_   = np.concatenate((Tp_, pobs_[np.newaxis,:]), axis=0); # je mets les Obs A LA FIN
+        iObs_in_Tp_ = Tp_.shape[0] - 1 # indice des Obs est, apres concatenation, le dernier element de TP_
         lignames  = list(Tm_);
         lignames.append("Obs"); # Obs sera le dernier
          # Ajoute les Obs a l'array de Modeles
@@ -1552,6 +1565,7 @@ if NIJ > 0 :
         metho_ = 'ward'; 
         dist_  = 'euclidean';
         coord2take = np.arange(NBCOORDAFC4CAH)
+        dendro_linewidth = 2
         if AFCWITHOBS :
             # (Mais ne pas prendre les obs dans la CAH (ne prendre que les modèles))
             if 0:
@@ -1577,8 +1591,9 @@ if NIJ > 0 :
             Rlp_ = dendrogram(Z_,p=Nmdlok,truncate_mode='lastp',labels=lignames,
                               orientation='top',get_leaves=True,no_plot=True);
             #R_ = dendrogram(Z_,p=Nmdlok,truncate_mode=None,orientation='top');
-            R_ = dendrogram(Z_,p=Nmdlok,truncate_mode=None,color_threshold=color_threshold,
-                            orientation='top',labels=lignames,leaf_font_size=10)
+            with plt.rc_context({'lines.linewidth': dendro_linewidth}): # Temporarily override the default line width
+                R_ = dendrogram(Z_,p=Nmdlok,truncate_mode=None,color_threshold=color_threshold,
+                                orientation='top',labels=lignames,leaf_font_size=10)
             #               leaf_rotation=45);
             plt.axhline(y=max_d, c='k')
             #L_ = np.array(lignames)
@@ -1587,12 +1602,13 @@ if NIJ > 0 :
             #xtickslocs, xtickslabels = plt.xticks()
             #plt.xticks(xtickslocs, xtickslabels)
             plt.tick_params(axis='x',reset=True)
-            plt.tick_params(axis='x',which='major',direction='out',length=3,pad=1,top=False,   #otation_mode='anchor',
+            plt.tick_params(axis='x',which='major',direction='inout',length=7,width=dendro_linewidth,
+                            pad=1,top=False,   #otation_mode='anchor',
                             labelrotation=-80)
             plt.grid(axis='y')
-            plt.xlabel('modele name', labelpad=0, fontsize=14)
+            plt.xlabel('model name', labelpad=0, fontsize=14)
             plt.ylabel("distance ({})".format(method_cah), fontsize=14)
-            lax=plt.axis(); daxy=(lax[3]-lax[2])/400
+            lax=plt.axis(); daxy=(lax[3]-lax[2])/160
             plt.axis([lax[0],lax[1],lax[2]-daxy,lax[3]])
             if SAVEFIG :
                 figfile += "Top-AFC-dendrogram"
@@ -1600,30 +1616,33 @@ if NIJ > 0 :
             # left-to-right dendogram ---------------
             plt.subplots_adjust(wspace=0.0, hspace=0.2, top=0.92, bottom=0.08, left=0.11, right=0.98)
             # ----------------------------------
-            R_ = dendrogram(Z_,p=Nmdlok,truncate_mode=None,color_threshold=color_threshold,
-                            orientation='right',labels=lignames,leaf_font_size=10);
+            with plt.rc_context({'lines.linewidth': dendro_linewidth}): # Temporarily override the default line width
+                R_ = dendrogram(Z_,p=Nmdlok,truncate_mode=None,color_threshold=color_threshold,
+                                orientation='right',labels=lignames,leaf_font_size=10);
             plt.axvline(x=max_d, c='k')
             #R_ = dendrogram(Z_,p=Nmdlok,truncate_mode='lastp',orientation='left',labels=lignames);
             #L_ = np.array(lignames)
             #plt.yticks((np.arange(len(TmdlnameArr)+1)*10)+7,L_[R_['leaves']], fontsize=8,
             #           verticalalignment='top')
             plt.tick_params(axis='y',reset=True)
-            plt.tick_params(axis='y',which='major',direction='out',length=4,pad=2,left=True,right=False,
+            plt.tick_params(axis='y',which='major',direction='inout',length=7,width=dendro_linewidth,
+                            pad=2,left=True,right=False,
                             labelleft=True,labelright=False,labelsize=8)
             plt.grid(axis='x')
-            plt.ylabel('modele name',rotation=-90, labelpad=10, fontsize=14)
+            plt.ylabel('model name',rotation=-90, labelpad=10, fontsize=14)
             plt.xlabel("distance ({})".format(method_cah), fontsize=14)
             # decale tres legerement les axes pour
-            lax=plt.axis(); daxx=(lax[0]-lax[1])/1200
-            plt.axis([lax[0],lax[1]-daxx,lax[2],lax[3]])
+            lax=plt.axis(); daxx=(lax[1]-lax[0])/330
+            plt.axis([lax[0]-daxx,lax[1],lax[2],lax[3]])
             if SAVEFIG :
                 figfile += "Left-AFC-dendrogram"
         del R_ # L_
         figfile += "_{:d}-clust".format(nb_clust)
-        plt.title("AFC: Coord(%s) dendrogram [%s]\nMétho=%s, dist=%s, nb_clust=%d"
+        plt.title("AFC dendrogram: Coord(%s) [%s]\nMethod=%s, Dist=%s, NbClust=%d"
                   %((coord2take+1).astype(str),case_label,metho_,dist_,nb_clust), fontsize=16)
         if SAVEFIG :
-            plt.savefig(case_figs_dir+os.sep+figfile)
+            plt.savefig(case_figs_dir+os.sep+figfile+".png")
+            plt.savefig(case_figs_dir+os.sep+figfile+".eps")
         del metho_, dist_, coord2take
 #%%
 if NIJ > 0 : # A.F.C Clusters
@@ -1634,6 +1653,12 @@ if NIJ > 0 : # A.F.C Clusters
     if 1 : # CAH on afc Models's coordinates (without obs !!!???)
         #
         class_afc = fcluster(Z_,nb_clust,'maxclust');
+        if AFCWITHOBS :  # si OBS in clusters, alors on retire les Obs e la liste
+            if iObs_in_Tp_ == (len(class_afc) - 1) : # SI OBS est le dernier de la liste
+                class_afc = class_afc[0:iObs_in_Tp_]
+            else :
+                print("\n*** AFC Clusters mean model preparation: 'obs' expected to be the last element of class_afc ***\n")
+                raise
         # -------------------------------------------------
         nclustcol = np.round(np.sqrt(nb_clust)).astype(int)
         nclustcol = np.max([min_nb_grpfig_afc,nb_clust,nclustcol])
